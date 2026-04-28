@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.Python
+# macOS
+.DS_Store
+# IDE / editor
+.continue/
+.vscode/
+.idea/
+# Experimental results — keep saturation evidence, ignore future ones
+results.json
+results_*.json
+!results_synthetic_saturation_evidence.json
+# HuggingFace cache (if used locally)
+.cache/

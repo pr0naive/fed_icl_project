@@ -1,0 +1,64 @@
+{
+  "config": {
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "selection_strategy": "random",
+    "model": "llama3"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.16666666666666666
+    },
+    {
+      "round": 1,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 127.08032298088074
+    },
+    {
+      "round": 2,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 148.5562560558319
+    },
+    {
+      "round": 3,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 150.424161195755
+    },
+    {
+      "round": 4,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 157.4283571243286
+    },
+    {
+      "round": 5,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 158.37456893920898
+    },
+    {
+      "round": 6,
+      "accuracy": 1.0,
+      "correct": 30,
+      "total": 30,
+      "time_seconds": 168.96120595932007
+    }
+  ],
+  "baselines": {
+    "zero_shot": 1.0,
+    "local_only": 1.0
+  },
+  "eval_accuracy": 0.95,
+  "total_time_seconds": 910.8250758647919
+}
