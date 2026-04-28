@@ -231,7 +231,7 @@ def print_summary(results: dict):
 def main():
     print()
     print("╔══════════════════════════════════════════════════════════╗")
-    print("║     Fed-ICL Replication — Sentiment Classification      ║")
+    print("║     Fed-ICL Replication — News Topic Classification      ║")
     print("║     Wang et al. (ICML 2025) at Smaller Scale            ║")
     print("╚══════════════════════════════════════════════════════════╝")
     print()
