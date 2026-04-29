@@ -43,7 +43,7 @@ class FedICLClient:
     def order_examples(self, examples: list, query_text: str) -> list:
         """
         Order the selected examples before building the prompt.
-        This is the key function for dissertation experiments on ordering.
+        Key function for dissertation experiments on ordering.
         """
         if ORDER_STRATEGY == "original":
             return examples

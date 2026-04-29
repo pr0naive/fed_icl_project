@@ -1,9 +1,6 @@
 """
 Fed-ICL Replication — Data Module (v2 - Harder Task)
 =====================================================
-4-class news topic classification (AG News style).
-This is much harder than binary sentiment — llama3 won't get 100% easily,
-so you'll see real differences between baselines and Fed-ICL.
 """
 
 import numpy as np
@@ -29,7 +26,7 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = _load_ag_news(num_examples=200, seed=SEED)
+RAW_DATA = _load_ag_news(num_examples=350, seed=SEED)
 
 
 def get_label_id(label: str) -> int:

@@ -1,5 +1,5 @@
 """
-Fed-ICL Replication — Main Runner (Run this file to execute the full Fed-ICL experiment.)
+Fed-ICL Replication--News Topic Classification
 
 Usage:
     python main.py
@@ -119,7 +119,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
         "baselines": {},
     }
 
-    # ── Main Fed-ICL Loop ────────────────────────────────────
+    # Main Fed-ICL Loop 
     total_start = time.time()
 
     for t in range(1, NUM_ROUNDS + 1):
@@ -166,7 +166,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
 
     total_time = time.time() - total_start
 
-    # ── Evaluate final context on held-out test set ──────────
+    # Evaluate final context on held-out test set 
     print(f"\n  ── Evaluating on held-out test set ({len(eval_set)} examples) ──")
     final_context = server.get_global_context()
     eval_correct = 0
@@ -232,7 +232,7 @@ def main():
     print()
     print("╔══════════════════════════════════════════════════════════╗")
     print("║     Fed-ICL Replication — News Topic Classification      ║")
-    print("║     Wang et al. (ICML 2025) at Smaller Scale            ║")
+    print("║     Wang et al. (ICML 2025) at Smaller Scale             ║")
     print("╚══════════════════════════════════════════════════════════╝")
     print()
 
@@ -246,11 +246,11 @@ def main():
 
     # Run baselines
     print("\nRunning baselines first (this helps contextualise Fed-ICL results)...")
-    zero_shot_acc = run_baseline_zero_shot(eval_set[:20])  # Subset for speed
-    local_only_acc = run_baseline_local_only(client_datasets, eval_set[:20])
+    zero_shot_acc = run_baseline_zero_shot(eval_set)  # Subset for speed
+    local_only_acc = run_baseline_local_only(client_datasets, eval_set)
 
     # Run Fed-ICL
-    results = run_fed_icl(server_queries, client_datasets, eval_set[:20])
+    results = run_fed_icl(server_queries, client_datasets, eval_set)
     results["baselines"] = {
         "zero_shot": zero_shot_acc,
         "local_only": local_only_acc,
