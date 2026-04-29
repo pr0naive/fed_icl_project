@@ -13,5 +13,6 @@ __pycache__/
 results.json
 results_*.json
 !results_synthetic_saturation_evidence.json
+!results_agnews_baseline_n100.json
 # HuggingFace cache (if used locally)
 .cache/
