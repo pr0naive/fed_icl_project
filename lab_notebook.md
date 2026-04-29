@@ -1,0 +1,309 @@
+# Fed-ICL Lab Notebook
+
+A running log of decisions, results, and reasoning for the dissertation
+"Collaborative In-Context Learning in Federated Settings".
+
+Newest entries at the bottom.
+
+---
+
+## Project framing (early April 2026)
+
+**Research question** (agreed with Dr. Jin):
+*How does the ordering of in-context examples affect convergence and final
+accuracy in federated in-context learning, and does this effect interact
+with data heterogeneity?*
+
+Direction chosen: optimisation, not vulnerability. Centred on example
+selection strategies; what to select, ordering, batch size.
+
+Five papers read as foundation: Fed-ICL (Wang et al., ICML 2025),
+FedAvg (McMahan et al., 2017), KATE / What Makes Good ICL Examples
+(Liu et al., 2022), Language Models are Few-Shot Learners
+(Brown et al., 2020), Rethinking the Role of Demonstrations
+(Min et al., 2022).
+
+Negative results agreed to be valid; rigour of analysis prioritised.
+
+---
+
+## Initial implementation (early April)
+
+Built a 7-file Python codebase replicating Algorithm 1 from Wang et al.:
+`config.py`, `data.py`, `llm.py`, `federation.py`, `main.py`,
+`requirements.txt`, `README.md`.
+
+Core components:
+- Dirichlet partitioning across K=3 simulated clients
+- Iterative rounds of client relabelling and server-side majority-vote
+  aggregation
+- Five ordering strategies in `federation.py` controlled via
+  `ORDER_STRATEGY` in `config.py`: `original`, `similarity_ascending`,
+  `similarity_descending`, `label_grouped`, `label_alternating`,
+  `random_shuffle`
+
+Run locally on M4 MacBook Air via Ollama (llama3, mistral, phi available).
+
+Two early bugs: `LABEL_SPACE` ImportError (resolved by importing from
+`data.py` rather than `config.py`); `ZeroDivisionError` when extreme
+Dirichlet alpha values left a client with zero examples.
+
+---
+
+## First result: binary sentiment task, saturation (early April)
+
+Ran the implementation on a binary sentiment classification task
+(positive/negative).
+
+**Result:** llama3 zero-shot accuracy was 95–100% from the start.
+Federation could not improve on this, no headroom.
+
+**Interpretation:** Task was too easy for llama3. Federation cannot
+demonstrate value when the baseline is already at ceiling.
+
+**Action taken:** Switched task to 4-class news topic classification
+(world / sports / business / science) using a hand-written 152-example
+synthetic dataset (38 per class).
+
+**Why:** A 4-class task is harder than binary. The hypothesis was that
+the increased class count would create the headroom federation needs to
+demonstrate gain.
+
+---
+
+## Second result: synthetic 4-class, also saturated (early April)
+
+Ran with the synthetic 152-example news dataset.
+
+**Result:** Round 0 (random init): 16.7%. Round 1 onwards: 100%.
+Held-out test set: 95%. Zero-shot baseline: 100%. Local-only: 100%.
+
+**Interpretation:** llama3 also saturates the synthetic 4-class task.
+Two factors compound: (1) llama3 is a strong instruction-tuned model
+that handles news classification trivially, (2) the synthetic data was
+hand-written with clear category signals, making it cleaner and easier
+than realistic news.
+
+This is preserved as `results_synthetic_saturation_evidence.json` in the
+repo as evidence for the methodological observation that capable LLMs
+saturate common ICL benchmarks.
+
+**Action taken:** Prepared progress slides for Dr. Jin documenting the
+saturation finding, then had to step away from the project for ~3 weeks
+due to emergency travel.
+
+---
+
+## Resumption (28 April 2026)
+
+Returned to the project after a 3-week gap. Reviewed Dr. Jin's 10 April
+email, which gave guidance on five points:
+
+1. Switch to a HuggingFace benchmark dataset
+2. GPU access via mcrugcomp03.ex.ac.uk (SSH) or University GPU VMs
+3. Fix random seed as constant for now; vary later for robustness
+4. Focus next: switch dataset, establish solid baseline
+5. Set up GitHub repo and share link
+
+---
+
+## GitHub setup (28 April)
+
+Created private repository, then made public for ease of access on the
+GPU server. Initial commit: codebase, README, .gitignore, and the
+synthetic saturation evidence JSON.
+
+`.gitignore` configured to exclude `venv/`, `__pycache__/`, `.DS_Store`,
+`.continue/`, and `results*.json` , but with an explicit exception for
+`results_synthetic_saturation_evidence.json`, which is preserved as
+evidence of the saturation finding.
+
+Required cleanup: initial `git add .` had captured `__pycache__/`,
+`.DS_Store`, and `.continue/` files because the staging happened before
+`.gitignore` was finalised. Resolved with `git rm -r --cached . && git add .`
+to re-apply ignore rules.
+
+Repo URL: `https://github.com/pr0naive/fed_icl_project`
+
+---
+
+## AG News dataset switch (28 April)
+
+Replaced the synthetic 152-example dataset in `data.py` with HuggingFace
+AG News (loaded via the `datasets` library). Changes:
+
+- Added `_AG_NEWS_LABEL_MAP` to convert AG News integer labels (0-3) to
+  the existing string label space (world/sports/business/science).
+  AG News class 3 is officially "Sci/Tech" but mapped to "science" to
+  preserve the existing prompt template.
+- Added `_load_ag_news(num_examples, seed)` to load and deterministically
+  subsample.
+- Replaced the `RAW_DATA = [...]` literal with
+  `RAW_DATA = _load_ag_news(num_examples=200, seed=SEED)`.
+
+Everything else (`LABEL_SPACE`, `partition_data_dirichlet`,
+`prepare_experiment`) unchanged.
+
+**Why this dataset:**
+- Standard benchmark in the ICL literature, comparable to other work
+- Same 4-class structure as the synthetic data, minimal disruption
+- Real news headlines are noisier and more ambiguous than hand-written
+  examples, expected to provide headroom
+
+---
+
+## Environment fix: Python 3.14 → 3.12 (28 April)
+
+Initial venv was created with Python 3.14 (newest stable). pip itself
+was broken inside the venv: `ModuleNotFoundError: No module named
+'pip._vendor.rich.markup'`. Cause: bundled pip in 3.14 venv missing
+internal modules.
+
+**Action taken:** Rebuilt venv with Python 3.12 (more mature for ML
+tooling). Resolved.
+
+**Why:** Python 3.14 is too new, many ML packages, including the
+bundled pip, haven't fully caught up. 3.10–3.12 is the stable range.
+
+---
+
+## First AG News result (28 April, evening)
+
+First run on AG News, default config:
+- N=200 total examples, EVAL_SIZE=40, NUM_SERVER_QUERIES=30
+- 3 clients, 6 rounds, alpha=0.5, 3 shots, llama3
+- Runtime: 48 minutes
+
+**Results:**
+| Metric | Value |
+|---|---|
+| Zero-shot baseline | 95.0% (19/20) |
+| Local-only baseline | 80.0% (16/20) |
+| Round 0 (random init) | 33.3% |
+| Rounds 1-4 | 76.7% |
+| Rounds 5-6 | 80.0% |
+| Held-out test set | 75.0% (15/20) |
+
+**Federation gain over random init: +46.7%.**
+**Federation accuracy *below* zero-shot baseline: -15.0%.**
+
+**Interpretation:**
+This is more interesting than expected. AG News is partially saturated
+(zero-shot at 95%) but a clear federation curve is visible, random
+init at 33% climbs monotonically to 80%. However, federation converges
+*below* zero-shot, not above it.
+
+The mechanism appears to be: llama3 already classifies news headlines
+well without examples. Adding examples drawn from a Dirichlet-skewed
+client pool (Client 0 has 25 world / 10 sports / 12 business / 22 science
+out of 69 total) introduces a class-distribution bias. Three randomly
+selected examples might be three "world" headlines, which causes the
+model to over-weight that class for the next prediction. Adding biased
+examples is worse than no examples for a model that's already strong on
+the task.
+
+This is consistent with Min et al. (2022): when base models are
+strong, examples function more as distribution priors than as
+demonstrations.
+
+**Why this matters for the dissertation:**
+This isn't a saturation failure, it's potentially a finding in its own
+right. "Federated ICL fails to exceed zero-shot performance for capable
+LLMs on standard benchmarks" is a defensible result with a clear
+mechanism. The interaction with heterogeneity (alpha) becomes the
+research question: at what level of heterogeneity does federation start
+to add or subtract value over zero-shot?
+
+**Eval set sizes are small.** 30 server queries and 20 test examples
+means single-example flips move accuracy by 3–5 percentage points.
+Ordering effects are typically smaller than this. Need to scale up.
+
+---
+
+## Action: scaling up evaluation (28 April, night)
+
+Changes:
+- `config.py`: `NUM_SERVER_QUERIES` 30 → 100, `EVAL_SIZE` 40 → 100
+- `data.py`: `_load_ag_news(num_examples=...)` 200 → 350
+
+Expected runtime: ~2–2.5 hours per run on the Mac (3× the previous run).
+
+**Why:** to reduce per-example noise floor below the size of effects
+we expect to measure (ordering differences typically 2–10 pp).
+
+[Run in progress]
+
+---
+
+## GPU server access, pending (28 April)
+
+Attempted SSH to `mcrugcomp03.ex.ac.uk` after VPN setup. Authentication
+fails immediately after password entry: `Connection closed by port 22`.
+Likely cause: account exists but isn't provisioned for shell access on
+this specific server.
+
+Emailed Dr. Jin to verify provisioning. Awaiting response.
+
+**Workaround:** Local Mac runs are workable for the experiment sweep
+(~2 hours per run × 12 runs = ~24 hours total, doable in two overnight
+batches). GPU server becomes more useful when testing smaller models
+(mistral, phi) to deliberately introduce headroom.
+
+---
+
+## Open questions / next steps
+
+- Does the zero-shot vs Fed-ICL gap hold at n=100 evaluation?
+- Does federation gain (over random init, not over zero-shot) vary with
+  alpha?
+- Do the five ordering strategies produce measurable differences at
+  this eval size?
+- If saturation persists with llama3, does federation behave differently
+  with a weaker model (mistral 7B, phi 3.8B)?
+
+
+## First scaled run, 100 server queries, baselines still on 20 (29 April, ~12:30 AM)
+
+Ran with `NUM_SERVER_QUERIES=100`, `EVAL_SIZE=100`, total examples=350.
+
+**Runtime: 6,642 seconds = 110 minutes** (≈2× the previous run, slightly
+under prediction). Fed-ICL evaluation now over 100 server queries.
+
+**Results:**
+| Metric | Value | n |
+|---|---|---|
+| Zero-shot baseline | 75.0% | 20 |
+| Local-only baseline | 80.0% | 20 |
+| Round 0 (random init) | 25.0% | 100 |
+| Round 1 | 76.0% | 100 |
+| Round 2 | 79.0% | 100 |
+| Round 3 | 79.0% | 100 |
+| Round 4 | 80.0% | 100 |
+| Round 5 | 76.0% | 100 |
+| Round 6 | 78.0% | 100 |
+| Held-out test | 75.0% | 20 |
+
+Federation gain over random init: +53.0 pp (25% → 78%).
+
+**Critical observation:** baselines and test set are still on 20
+examples, `main.py` has hardcoded `eval_set[:20]` slices. Only the
+Fed-ICL round-by-round evaluation actually scaled to 100. So
+zero-shot/local-only/test numbers remain noisy.
+
+Zero-shot dropped from 95% to 75% between runs despite both being on 20
+examples, suggests the original 95% was an outlier from favourable
+sampling. Fed-ICL convergence (78%) is much more reliable being based
+on 100 examples.
+
+The Dirichlet partition was sharply skewed this time: Client 0 had 0
+sports, Client 1 had 30 sports out of 66, Client 2 had only 13 total
+examples. Federation still converged consistently, encouraging
+indication that majority voting handles severe heterogeneity at α=0.5.
+
+**Action:** Remove the hardcoded `[:20]` in `main.py` so baselines run
+on the full eval set. Re-run baseline before drawing any conclusion
+about whether Fed-ICL exceeds, equals, or underperforms zero-shot.
+
+**Why:** Cannot compare 100-example Fed-ICL to 20-example baseline.
+Single example flips on n=20 move accuracy by 5 pp, larger than any
+real effect we'd expect to detect. Baselines must be at the same scale.
