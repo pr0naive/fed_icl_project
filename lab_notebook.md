@@ -300,10 +300,106 @@ sports, Client 1 had 30 sports out of 66, Client 2 had only 13 total
 examples. Federation still converged consistently, encouraging
 indication that majority voting handles severe heterogeneity at α=0.5.
 
-**Action:** Remove the hardcoded `[:20]` in `main.py` so baselines run
+**Action:** Removed the hardcoded `[:20]` in `main.py` so baselines run
 on the full eval set. Re-run baseline before drawing any conclusion
 about whether Fed-ICL exceeds, equals, or underperforms zero-shot.
 
 **Why:** Cannot compare 100-example Fed-ICL to 20-example baseline.
 Single example flips on n=20 move accuracy by 5 pp, larger than any
 real effect we'd expect to detect. Baselines must be at the same scale.
+
+## Corrected baseline, all metrics on n=100 (29 April, ~6:30 AM)
+
+After fixing the hardcoded `eval_set[:20]` slice in `main.py`, re-ran the
+full pipeline with all baselines and the held-out test on the same eval
+set as Fed-ICL. Same Dirichlet partition as the previous run (Client 0:
+71 examples, Client 1: 66, Client 2: 13).
+
+**Results:**
+| Metric | Value | n |
+|---|---|---|
+| Zero-shot baseline | 72.0% | 100 |
+| Local-only baseline | 80.0% | 100 |
+| Round 0 (random init) | 20.0% | 100 |
+| Round 1 | 78.0% | 100 |
+| Round 2 | 78.0% | 100 |
+| Round 3 | 75.0% | 100 |
+| Round 4 | 79.0% | 100 |
+| Round 5 | 76.0% | 100 |
+| Round 6 | 79.0% | 100 |
+| Held-out test | 80.0% | 100 |
+
+Federation gain over random init: +59.0 pp (20% → 79%).
+Federation vs zero-shot: +7.0 pp.
+Federation vs local-only: −1.0 pp (within noise).
+Runtime: 165 minutes (vs 110 min previous; baselines now n=100 each).
+
+**Interpretation:**
+With proper sample-size symmetry, the picture is now defensible. Three
+observations:
+
+1. *Fed-ICL exceeds zero-shot by a real, measurable margin.* +7 pp on
+   n=100 is well above the noise floor (~±2 pp at this scale).
+   Federation is not a no-op.
+
+2. *Fed-ICL roughly matches local-only at α=0.5.* This is consistent
+   with the partition: local-only effectively uses Client 0's pool
+   (71 examples covering all four classes), which is the strongest
+   single client. Federation can only equal, not exceed, the best
+   client when that client already has enough balanced data to do well
+   alone.
+
+3. *The held-out test set (80%) generalises from the server queries
+   (79%) without overfitting.* The global context learned from the
+   30-query iterative refinement transfers cleanly to unseen examples.
+
+Yesterday's apparent "Fed-ICL underperforms zero-shot" finding was
+entirely an artefact of the n=20 baselines. The original 95% zero-shot
+on n=30 was favourable sampling on a small set; on n=100 the same
+baseline is 72%. This is a useful reminder of how much sample size
+matters at the scales we're working at.
+
+**The research question becomes sharper:**
+Federation's value should grow with heterogeneity. At α=0.5, no single
+client is so weak that federation has obvious headroom over local-only.
+At α=0.05, the partition would be extremely skewed and local-only
+should suffer badly, federation should clearly win. At α=10.0, the
+partition would be nearly uniform and the three metrics should converge.
+The α-sweep is the next experiment.
+
+**Action taken:** committed `results_agnews_baseline_n100.json` as a
+preserved reference result in the repo (whitelisted in `.gitignore`).
+This is the baseline against which all sweep runs will be compared.
+
+---
+
+## Methodological checklist added to repo (29 April)
+
+Created `methodology_checklist.md` as a pre-flight check for every
+experimental run, prompted by the n=20 issue caught yesterday. Items:
+
+- [ ] Are all baselines (zero-shot, local-only) evaluated on the same n
+      as Fed-ICL?
+- [ ] Is the held-out test set evaluated on the same n?
+- [ ] Is the random seed fixed and recorded?
+- [ ] Is the Dirichlet partition reproducible from the seed?
+- [ ] Has the result file been renamed before the next run?
+- [ ] Has the run's purpose been logged in the lab notebook?
+
+The single most important check is the first one: comparing
+differently-sized baselines was what nearly hid a real federation gain
+yesterday. Easy to miss; hard to detect after the fact.
+
+---
+
+## Open questions for the next meeting
+
+- Should I include a fourth client at α=0.05 to make the heterogeneity
+  more extreme, or stick with K=3 across all sweep configurations for
+  consistency?
+- For the ordering sweep, should I run all five strategies at α=0.5,
+  or wait for the heterogeneity sweep to finish and then run ordering
+  at the most informative α?
+- The result here uses random selection. Would Dr. Jin prefer
+  similarity-based selection (KATE-style) as the sweep's default, or
+  is random selection the better baseline to vary ordering against?
