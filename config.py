@@ -6,7 +6,7 @@ Adjust these before running experiments.
 """
 
 # LLM Settings
-MODEL_NAME = "llama3"           # Ollama model name (must be pulled first)
+MODEL_NAME = "mistral"           # Ollama model name (must be pulled first)
 OLLAMA_HOST = "http://localhost:11434"
 TEMPERATURE = 0.0               # 0 = deterministic outputs (reproducible)
 MAX_TOKENS = 10                 # Short — we only need a category label
