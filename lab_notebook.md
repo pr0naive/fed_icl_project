@@ -403,3 +403,40 @@ yesterday. Easy to miss; hard to detect after the fact.
 - The result here uses random selection. Would Dr. Jin prefer
   similarity-based selection (KATE-style) as the sweep's default, or
   is random selection the better baseline to vary ordering against?
+
+## Mistral 7B run on AG News (3 May)
+
+Same configuration as the llama3 baseline (α=0.5, K=3, T=6, 3 shots,
+random selection, n=100 across all metrics, seed 42).
+
+**Results:**
+| Metric | mistral | llama3 (reference) |
+|---|---|---|
+| Zero-shot | 75% | 72% |
+| Local-only | 78% | 80% |
+| Round 6 (Fed-ICL) | 81% | 79% |
+| Held-out test | 77% | 80% |
+| Fed-ICL gain over zero-shot | +6 pp | +7 pp |
+| Fed-ICL gain over local-only | +3 pp | −1 pp |
+| Runtime | 8,322s | 9,932s |
+
+**Observations:**
+1. Mistral and llama3 are comparable in overall capability on this task, 
+   all metrics within 3 pp of each other. The 7-8B open-instruct tier
+   appears to perform similarly on AG News.
+
+2. Federation's relative advantage is more visible with mistral:
+   Fed-ICL exceeds local-only by 3 pp here, where llama3 had Fed-ICL
+   matching local-only. Suggests federation's contribution becomes
+   measurable when the single-client baseline is slightly weaker, even
+   if overall capability is comparable.
+
+3. Round-by-round stability is similar to llama3, convergence within
+   one round, then a 4-pp band across the remaining rounds. No learning
+   or degradation across rounds.
+
+4. Mistral runs about 16% faster than llama3 (139 vs 165 min).
+
+**Caveat:** A single comparison at one heterogeneity setting (α=0.5)
+isn't enough to establish that federation's advantage scales with
+weakness. Phi run pending.
