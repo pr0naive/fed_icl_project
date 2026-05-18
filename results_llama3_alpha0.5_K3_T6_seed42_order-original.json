@@ -1,0 +1,78 @@
+{
+  "config": {
+    "model": "llama3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 100,
+    "selection_strategy": "random",
+    "order_strategy": "original",
+    "seed": 42
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.28
+    },
+    {
+      "round": 1,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 1230.8923568725586
+    },
+    {
+      "round": 2,
+      "accuracy": 0.82,
+      "correct": 82,
+      "total": 100,
+      "time_seconds": 1291.9216940402985
+    },
+    {
+      "round": 3,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 1320.6706459522247
+    },
+    {
+      "round": 4,
+      "accuracy": 0.82,
+      "correct": 82,
+      "total": 100,
+      "time_seconds": 1350.8255927562714
+    },
+    {
+      "round": 5,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 1337.9978120326996
+    },
+    {
+      "round": 6,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 1270.1042220592499
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.74,
+    "local_only": 0.74
+  },
+  "eval_accuracy": 0.81,
+  "total_time_seconds": 7802.412727832794,
+  "parse_stats": {
+    "total_calls": 3600,
+    "fallback_count": 3,
+    "fallback_rate": 0.0008333333333333334,
+    "sample_unparseable": [
+      "entertainment",
+      "technology",
+      "entertainment"
+    ]
+  }
+}
