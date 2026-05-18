@@ -25,55 +25,84 @@ def build_icl_prompt(examples: list, query_text: str) -> str:
     prompt += f"Headline: \"{query_text}\"\nCategory:"
     return prompt
 
+_PARSE_STATS = {"total": 0, "fallback": 0, "examples": []}
 
-def query_ollama(prompt: str, model: str = None) -> str:
+def build_icl_prompt(examples: list, query_text: str) -> str:
+    prompt = (
+        "Classify the following news headline into exactly one of these categories: "
+        "\"world\", \"sports\", \"business\", or \"science\". "
+        "Reply with only the category label, nothing else.\n\n"
+    )
+    for text, label in examples:
+        prompt += f"Headline: \"{text}\"\nCategory: {label}\n\n"
+    prompt += f"Headline: \"{query_text}\"\nCategory:"
+    return prompt
+
+def query_ollama(prompt: str, model: str = None, max_retries: int = 2) -> str:
     model = model or MODEL_NAME
-    try:
-        resp = requests.post(
-            f"{OLLAMA_HOST}/api/generate",
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": TEMPERATURE,
-                    "num_predict": MAX_TOKENS,
-                }
-            },
-            timeout=120,
-        )
-        resp.raise_for_status()
-        return resp.json().get("response", "").strip()
-    except requests.exceptions.ConnectionError:
-        print(f"  [ERROR] Cannot connect to Ollama at {OLLAMA_HOST}.")
-        print(f"          Make sure Ollama is running: ollama serve")
-        raise
-    except Exception as e:
-        print(f"  [ERROR] Ollama query failed: {e}")
-        return ""
-
+    for attempt in range(max_retries + 1):
+        try:
+            resp = requests.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={
+                    "model": model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": TEMPERATURE,
+                        "num_predict": MAX_TOKENS,
+                    }
+                },
+                timeout=120,
+            )
+            resp.raise_for_status()
+            return resp.json().get("response", "").strip()
+        except requests.exceptions.ConnectionError:
+            print(f"  [ERROR] Cannot connect to Ollama at {OLLAMA_HOST}.")
+            raise
+        except Exception as e:
+            if attempt < max_retries:
+                print(f"  [WARN] Ollama attempt {attempt+1} failed: {e}; retrying in 3s...")
+                time.sleep(3)
+            else:
+                print(f"  [ERROR] Ollama query failed after {max_retries+1} attempts: {e}")
+    return ""
 
 def parse_label(raw_response: str) -> str:
+    _PARSE_STATS["total"] += 1
     text = raw_response.lower().strip().strip(".,!\"'")
+    tokens = [t for t in re.split(r"[\s.,!?:;]+", text) if t]
 
-    for label in LABEL_SPACE:
-        if label in text:
-            return label
+    # Strictest: the very first token IS a label.
+    if tokens and tokens[0] in LABEL_SPACE:
+        return tokens[0]
 
-    first_word = re.split(r"[\s.,!]", text)[0]
-    for label in LABEL_SPACE:
-        if first_word == label:
-            return label
+    # Less strict: any standalone token equals a label.
+    for tok in tokens:
+        if tok in LABEL_SPACE:
+            return tok
 
-    # Fallback: return most common label
+    # Fallback: log and return LABEL_SPACE[0]. Behaviour unchanged downstream,
+    # but we now know the fallback rate per run.
+    _PARSE_STATS["fallback"] += 1
+    if len(_PARSE_STATS["examples"]) < 30:
+        _PARSE_STATS["examples"].append(raw_response[:120])
     return LABEL_SPACE[0]
 
+def get_parse_stats():
+    total = _PARSE_STATS["total"]
+    fb    = _PARSE_STATS["fallback"]
+    return {
+        "total_calls": total,
+        "fallback_count": fb,
+        "fallback_rate": (fb / total) if total else 0,
+        "sample_unparseable": list(_PARSE_STATS["examples"]),
+    }
 
 def predict_with_icl(examples: list, query_text: str, model: str = None) -> str:
     prompt = build_icl_prompt(examples, query_text)
     raw = query_ollama(prompt, model=model)
-    label = parse_label(raw)
-    return label
+    return parse_label(raw)
 
 
 def check_ollama_ready() -> bool:

@@ -20,75 +20,52 @@ class FedICLClient:
 
     def select_examples(self, query_text: str, pool: list, n: int) -> list:
         if len(pool) <= n:
-            return pool.copy()
+            return list(pool)
 
-        if SELECTION_STRATEGY == "random":
-            indices = np.random.choice(len(pool), size=n, replace=False)
-            return [pool[i] for i in indices]
-
-        elif SELECTION_STRATEGY == "similarity":
+        if SELECTION_STRATEGY == "similarity":
             query_words = set(query_text.lower().split())
             scores = []
             for text, label in pool:
                 example_words = set(text.lower().split())
-                overlap = len(query_words & example_words)
-                scores.append(overlap)
+                scores.append(len(query_words & example_words))
             top_indices = np.argsort(scores)[-n:]
-            return [pool[i] for i in top_indices]
+            selected = [pool[i] for i in top_indices]
+            # CRITICAL: shuffle so order_examples is the sole controller of order.
+            np.random.shuffle(selected)
+            return selected
 
-        else:
-            indices = np.random.choice(len(pool), size=n, replace=False)
-            return [pool[i] for i in indices]
+        # Default: random selection.
+        indices = np.random.choice(len(pool), size=n, replace=False)
+        return [pool[i] for i in indices]
 
     def order_examples(self, examples: list, query_text: str) -> list:
-        """
-        Order the selected examples before building the prompt.
-        Key function for dissertation experiments on ordering.
-        """
+        ex = list(examples)  # do not mutate caller's list
         if ORDER_STRATEGY == "original":
-            return examples
-
+            return ex
         elif ORDER_STRATEGY == "similarity_ascending":
-            # Least similar first, most similar last (closest to query)
             query_words = set(query_text.lower().split())
-            examples.sort(key=lambda x: len(
-                set(x[0].lower().split()) & query_words
-            ))
-            return examples
-
+            return sorted(ex, key=lambda x: len(set(x[0].lower().split()) & query_words))
         elif ORDER_STRATEGY == "similarity_descending":
-            # Most similar first, least similar last
             query_words = set(query_text.lower().split())
-            examples.sort(key=lambda x: len(
-                set(x[0].lower().split()) & query_words
-            ), reverse=True)
-            return examples
-
+            return sorted(ex, key=lambda x: len(set(x[0].lower().split()) & query_words), reverse=True)
         elif ORDER_STRATEGY == "label_grouped":
-            # Group by label: all of one class, then next class, etc.
-            examples.sort(key=lambda x: x[1])
-            return examples
-
+            return sorted(ex, key=lambda x: x[1])
         elif ORDER_STRATEGY == "label_alternating":
-            # Alternate labels as much as possible
             from collections import defaultdict
             by_label = defaultdict(list)
-            for ex in examples:
-                by_label[ex[1]].append(ex)
+            for e in ex:
+                by_label[e[1]].append(e)
             result = []
             while any(by_label.values()):
                 for label in sorted(by_label.keys()):
                     if by_label[label]:
                         result.append(by_label[label].pop(0))
             return result
-
         elif ORDER_STRATEGY == "random_shuffle":
-            shuffled = examples.copy()
+            shuffled = list(ex)
             np.random.shuffle(shuffled)
             return shuffled
-
-        else:
-            return examples
+        return ex
 
     def relabel_local_data(self, global_context: list):
         from llm import predict_with_icl

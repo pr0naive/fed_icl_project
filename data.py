@@ -17,7 +17,7 @@ _AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
 
 
 """Load AG News from HuggingFace and subsample deterministically.
-AG News has 120k training examples — far more than ICL needs.
+AG News has 120k training examples, far more than ICL needs.
 We take a random subset for comparable scale to the synthetic data."""
 def _load_ag_news(num_examples, seed):
     ds = load_dataset("ag_news", split="train")
@@ -28,10 +28,15 @@ for i in indices]
                     
 RAW_DATA = _load_ag_news(num_examples=350, seed=SEED)
 
+def _load_ag_news_test(num_examples, seed):
+    ds = load_dataset("ag_news", split="test")
+    rng = np.random.default_rng(seed + 1)
+    indices = rng.choice(len(ds), size=num_examples, replace=False)
+    return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
+            for i in indices]
 
 def get_label_id(label: str) -> int:
     return LABEL_SPACE.index(label)
-
 
 def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
     labels = np.array([get_label_id(d[1]) for d in data])
@@ -43,13 +48,28 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
         np.random.shuffle(class_indices)
         proportions = np.random.dirichlet([alpha] * num_clients)
         counts = (proportions * len(class_indices)).astype(int)
-        # Ensure at least 1 example per client per class when possible
-        for k in range(num_clients):
-            if counts[k] == 0 and len(class_indices) > num_clients:
-                counts[k] = 1
-        # Adjust first client to match total
-        counts[0] += len(class_indices) - counts.sum()
-        counts[0] = max(counts[0], 0)
+
+        if len(class_indices) >= num_clients:
+            for k in range(num_clients):
+                if counts[k] == 0:
+                    counts[k] = 1
+
+        # Change 2b: distribute residual round-robin from a random client,
+        # not all on client 0 (which biased the local-only baseline upward).
+        deficit = len(class_indices) - int(counts.sum())
+        if deficit > 0:
+            start = np.random.randint(num_clients)
+            for offset in range(deficit):
+                counts[(start + offset) % num_clients] += 1
+        elif deficit < 0:
+            excess = -deficit
+            while excess > 0:
+                biggest = int(np.argmax(counts))
+                if counts[biggest] > 1:
+                    counts[biggest] -= 1
+                    excess -= 1
+                else:
+                    break
 
         start = 0
         for k in range(num_clients):
@@ -60,7 +80,6 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
 
     for k in range(num_clients):
         np.random.shuffle(client_data[k])
-
     return client_data
 
 
@@ -68,18 +87,19 @@ def prepare_experiment():
     data = RAW_DATA.copy()
     np.random.shuffle(data)
 
-    eval_set = data[:EVAL_SIZE]
-    server_queries = data[EVAL_SIZE:EVAL_SIZE + NUM_SERVER_QUERIES]
-    client_pool = data[EVAL_SIZE + NUM_SERVER_QUERIES:]
+# eval_set now comes from AG News TEST split, not a slice of train.
+    eval_set = _load_ag_news_test(EVAL_SIZE, SEED)
+    server_queries = data[:NUM_SERVER_QUERIES]
+    client_pool = data[NUM_SERVER_QUERIES:]
 
     client_datasets = partition_data_dirichlet(client_pool, NUM_CLIENTS, DIRICHLET_ALPHA)
 
     print("=" * 60)
     print("DATA DISTRIBUTION SUMMARY")
     print("=" * 60)
-    print(f"  Total examples:    {len(RAW_DATA)}")
+    print(f"  Total train:    {len(RAW_DATA)}")
     print(f"  Label space:       {LABEL_SPACE}")
-    print(f"  Evaluation set:    {len(eval_set)}")
+    print(f"  Evaluation set (test):    {len(eval_set)} drawn from ag_news split='test')")
     print(f"  Server queries:    {len(server_queries)}")
     print(f"  Client pool:       {len(client_pool)}")
     print(f"  Dirichlet alpha:   {DIRICHLET_ALPHA}")
