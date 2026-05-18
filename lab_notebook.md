@@ -506,3 +506,39 @@ Accuracy numbers at n = 10 are not meaningful (one example moves the metric by 1
 ### Commits planned for this session
 
 1. **Code only.** Single commit containing all the edits above. No result changes.
+
+### Reference run on tightened pipeline (18 May continued)
+
+**Run.** `FED_ICL_MODEL=llama3 FED_ICL_ALPHA=0.5 FED_ICL_K=3 FED_ICL_ORDER=original FED_ICL_SEED=42 python main.py`
+Wall-clock: 7,802 s (2h 10m).
+Output: `results_llama3_alpha0.5_K3_T6_seed42_order-original.json`.
+
+**Dirichlet partition.** Under the new round-robin residual code: client 0 = 113 (world 27, sports 29, business 1, science 56), client 1 = 80 (world 36, sports 3, business 40, science 1), client 2 = 57 (world 1, sports 30, business 25, science 1). Skew is genuine at α=0.5 with a 250-row client pool. Note that business and science are unevenly distributed: client 0 holds 56 of 58 science examples, client 1 holds 40 of 66 business examples. Worth flagging if ordering experiments produce strong per-class effects.
+
+**Results.**
+
+| Metric          | Value     |
+|-----------------|-----------|
+| Zero-shot       | 74% (74/100) |
+| Local-only      | 74% (74/100) |
+| Fed-ICL Round 0 | 28% (random init) |
+| Fed-ICL Round 1 | 81% |
+| Fed-ICL Round 2 | 82% |
+| Fed-ICL Round 3 | 78% |
+| Fed-ICL Round 4 | 82% |
+| Fed-ICL Round 5 | 80% |
+| Fed-ICL Round 6 | 81% (81/100) |
+| Held-out        | 81% (81/100) |
+| Parse fallback  | 0.1% (3 / 3{,}600) |
+
+**Comparison against preserved baseline.** Old pipeline (`results_agnews_baseline_n100.json`): zero-shot 72%, local-only 80%, Fed-ICL R6 79%, held-out 80%. New numbers: zero-shot +2pp, local-only -6pp, Fed-ICL R6 +2pp, held-out +1pp. The six-point drop in local-only is the Dirichlet residual fix plus the held-out-from-test-split fix. Both move local-only in the direction the methodology predicts.
+
+**Story change.** Under the tightened pipeline, llama3 shows a federation gain of +7pp over local-only (was -1pp under the old pipeline). This inverts the headline narrative of the proposal's section 3.7. The capability-dependence hypothesis (H3) cannot be assessed from a single model under the new pipeline; mistral 7B needs to be re-run before any cross-model claim is supportable.
+
+**Trajectory observation.** Round 1 already reaches 81%, and rounds 2-6 hover between 78 and 82%. The federation benefit is essentially a single-round effect at α=0.5. This suggests ordering experiments at α=0.5 may show small effects across rounds because the model converges quickly; effects may be larger at α=0.05 where multi-round refinement matters more. Worth designing the heterogeneity sweep to test this prediction explicitly.
+
+**Parser performance.** 3 of 3,600 calls failed to parse. The strict token-level parser is not over-rejecting. Means accuracy numbers reflect actual model behaviour, not parser artefacts.
+
+**Commits.**
+
+added glossary.md: Definitions for every term and code variable.
