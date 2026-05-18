@@ -440,3 +440,69 @@ random selection, n=100 across all metrics, seed 42).
 **Caveat:** A single comparison at one heterogeneity setting (α=0.5)
 isn't enough to establish that federation's advantage scales with
 weakness. Phi run pending.
+
+
+## Methodology fix before proposal meeting (18 May)
+
+**Context.** Draft proposal review with Dr. Jin scheduled for 18 May. A pre-meeting code review against the proposal claims surfaced several issues that would have invalidated or contaminated the upcoming ordering sweep. This session closes those gaps. No experimental conclusions change from these edits alone; numbers shift slightly because the parser is now strict and the baselines use the same pipeline as Fed-ICL.
+
+### Methodology fixes
+
+**Held-out evaluation now drawn from the AG News test split.**
+`eval_set` previously came from a slice of the same 350-row training subsample as `server_queries` and `client_pool`. Within-run disjointness was preserved, but "held-out" in conventional ML usage means held out from the dataset's test split. `data.py` now loads 100 rows from `ag_news` `split="test"` with an independent seed (`SEED + 1`) so test sampling does not couple to training sampling.
+
+**Dirichlet partition residual is round-robin, not dumped on client 0.**
+Previously `counts[0] += len(class_indices) - counts.sum()` placed all rounding leftover on client 0. Because `run_baseline_local_only` uses client 0, this systematically inflated the local-only baseline's data pool. The residual is now distributed round-robin starting from a randomly chosen client index. Impact is largest at small alpha where rounding matters most.
+
+**Local-only and held-out evaluation use the same select-and-order pipeline as Fed-ICL.**
+Both previously did inline random selection with no ordering applied. This meant ordering experiments would have compared Fed-ICL-with-ordering against local-only-without-ordering, conflating federation and ordering effects. Both code paths now instantiate a `FedICLClient` and call its `select_examples` and `order_examples` methods. Federation-gain numbers now isolate the federation effect at a chosen ordering.
+
+**`parse_label` switched from substring to token matching.**
+Previous rule `if label in text` matched "world" inside any sentence containing the word, including sports headlines mentioning a world cup. Verbose model outputs were misclassified in a way that correlated with ordering strategy (poor orderings produce more verbose outputs from llama3). New rule splits on whitespace and punctuation and matches the first token that equals a label.
+
+**Parse fallback rate is now logged.**
+When no label matches, the parser still returns `LABEL_SPACE[0]` (preserved to avoid breaking the eval pipeline), but `_PARSE_STATS` now counts every fallback and stores up to 30 raw responses for inspection. `get_parse_stats()` is called from `main.py` and the summary is written into `results["parse_stats"]`. Smoke test on llama3 showed fallback rate of 0.1% (3 / 2,250), which means the strict parser is not over-rejecting valid outputs.
+
+**Ollama retry with short backoff.**
+`query_ollama` previously caught general exceptions and returned an empty string, which became a phantom "world" prediction via the parser fallback. Now retries up to two extra attempts with 3-second sleeps before giving up. Addresses the HTTP 500 / orphaned-runner failure mode observed previously.
+
+**Selection branch shuffles after similarity selection.**
+`np.argsort(scores)[-n:]` returns top-n indices sorted ascending by score, so under `SELECTION_STRATEGY="similarity"` the returned list was already similarity-ascending before `order_examples` saw it. `ORDER_STRATEGY="original"` was therefore not a true control under similarity selection. A shuffle inside the similarity branch makes ordering the sole controller of order.
+
+**`order_examples` no longer mutates its input list.**
+In-place `.sort()` replaced with `sorted(...)` returning a new list. Defensive; prevents surprising bugs as the codebase grows.
+
+### Reproducibility
+
+**All experimental parameters overridable via `FED_ICL_*` environment variables.**
+`config.py` reads each parameter from `os.environ` with the literal value as fallback. Sweeps launch as a single shell command:
+
+    for s in 41 42 43; do
+      FED_ICL_SEED=$s FED_ICL_ORDER=label_grouped python main.py
+    done
+
+Source no longer needs to be edited between runs.
+
+**Result files now record every parameter that produced them.**
+Added `order_strategy`, `seed`, `num_server_queries`, `eval_size`, and `parse_stats` to `results["config"]`. Output filename auto-generated from the config:
+
+    results_{model}_alpha{α}_K{K}_T{T}_seed{S}_order-{order}.json
+
+Two runs with different parameters can never overwrite each other.
+
+### Smoke test (smoke, not science)
+
+Command: `FED_ICL_EVAL=10 FED_ICL_Q=10 FED_ICL_MODEL=llama3 python main.py`
+Wall-clock: 5,644 s (≈ 94 min).
+
+Signals:
+- Parse fallback rate 0.1% (3 / 2,250 calls). The parser fix works and llama3 is emitting clean labels almost always.
+- Auto-named output produced at `results_llama3_alpha0.5_K3_T6_seed42_order-original.json`.
+- All new config fields written into the JSON as expected.
+- Dirichlet partition under new residual code: client 0 = 30, client 1 = 216, client 2 = 94. Skew is genuine at α = 0.5 with a ~340-row training pool, not a bug. Worth flagging tomorrow as evidence that the heterogeneity sweep across α ∈ {0.05, 0.5, 10.0} will produce qualitatively different problems at each level.
+
+Accuracy numbers at n = 10 are not meaningful (one example moves the metric by 10 percentage points) and are not retained as evidence. Real run uses `EVAL_SIZE = 100` and `NUM_SERVER_QUERIES = 100`.
+
+### Commits planned for this session
+
+1. **Code only.** Single commit containing all the edits above. No result changes.
