@@ -1,161 +1,136 @@
 # Fed-ICL Replication
 
-Replication of *Federated In-Context Learning* (Wang et al., ICML 2025) for an
-MSc dissertation investigating how the **ordering of in-context examples**
-affects convergence and final accuracy in federated settings, and whether that
-effect interacts with data heterogeneity.
+Replication and extension of *Federated In-Context Learning* (Wang et al., ICML 2025) for an MSc dissertation at the University of Exeter. The dissertation investigates how the **ordering of in-context examples** affects convergence and final accuracy in federated settings, and whether that effect interacts with data heterogeneity.
 
-Runs on a MacBook Air M4 via Ollama with a 4-class news topic classification
-task (world / sports / business / science) loaded from HuggingFace AG News.
+The codebase runs locally on a MacBook Air M4 via Ollama, on a four-class news topic classification task (AG News, loaded from HuggingFace).
 
-## Status
+**Supervisor**: Dr. Rui Jin (R.Jin1@exeter.ac.uk)
+**Repository**: <https://github.com/pr0naive/fed_icl_project>
 
-This is a research codebase, not a finished product. The most recent baseline
-on AG News (n=100, α=0.5, K=3 clients, llama3) shows:
+## Documentation map
 
-- Zero-shot baseline: 72%
-- Local-only baseline: 80%
-- Fed-ICL (after 6 rounds): 79%
-- Held-out test set: 80%
-- Federation gain over random init: +59 percentage points
+This README is a launchpad. Detailed documentation lives in dedicated files so each can be updated independently as the project evolves.
 
-Federation exceeds zero-shot by ~7pp and roughly matches local-only at this
-heterogeneity level. The next planned experiments are a heterogeneity sweep
-(α ∈ {0.05, 0.5, 10.0}) and an ordering sweep across the five strategies
-implemented in `federation.py`.
+| File | What it covers |
+|---|---|
+| [`code_walkthrough.md`](code_walkthrough.md) | File-by-file tour of the codebase, design decisions behind each module, and the lifecycle of a single run. |
+| [`glossary.md`](glossary.md) | One-line definitions for every term and code variable, plus the paper-notation-to-code mapping. |
+| [`lab_notebook.md`](lab_notebook.md) | Chronological log of decisions, results, and reasoning. The canonical source for current experimental numbers. |
+| [`methodology_checklist.md`](methodology_checklist.md) | Pre-flight checks to run before launching an experiment. |
 
-A previous run on a synthetic 152-example dataset showed task saturation
-(zero-shot at 100% — no headroom for federation). That result is preserved as
-`results_synthetic_saturation_evidence.json` for reference.
+For headline experimental numbers, see the most recent entries in `lab_notebook.md`. They are not duplicated here because they change.
 
 ## Quick start
 
 ```bash
-# 1. Make sure Ollama is running and the model is pulled
+# 1. Ollama running with the model pulled
 ollama serve &
-ollama pull llama3
+ollama pull llama3   # or mistral, phi
 
-# 2. Set up Python dependencies
+# 2. Python environment
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# 3. Run
+# 3. Run with defaults
 python main.py
 ```
 
-A full default run takes roughly 2–3 hours on an M-series Mac. Results land
-in `results.json`.
+A default run takes roughly 2-3 hours on an M-series Mac. The output JSON is written to `results_{model}_alpha{α}_K{K}_T{T}_seed{S}_order-{order}.json` in the repo root; the filename is auto-generated from the run configuration so parallel runs cannot overwrite each other.
 
-## What it does
+## Configuring a run
 
-`main.py` runs three things in order, all on the same data split:
+Every experimental parameter can be set either by editing `config.py` or by overriding it from the shell. The override pattern means sweeps are shell loops, not source edits:
 
-1. **Zero-shot baseline** — no examples in the prompt. Establishes how well
-   the LLM solves the task without any in-context guidance.
-2. **Local-only baseline** — one client, no federation. Establishes whether
-   federation adds anything over a single client with its own data.
-3. **Fed-ICL** — full Algorithm 1 from Wang et al. (2025): K=3 simulated
-   clients, T=6 rounds of relabelling and majority-vote aggregation.
+```bash
+# Single run with non-default settings
+FED_ICL_MODEL=mistral FED_ICL_ALPHA=0.05 FED_ICL_K=5 \
+FED_ICL_ORDER=label_grouped FED_ICL_SEED=42 python main.py
 
-After Fed-ICL completes, the final global context is used as the example pool
-for a held-out evaluation set.
+# Sweep over seeds
+for s in 41 42 43; do
+  FED_ICL_SEED=$s python main.py
+done
 
-## Files
+# Sweep over orderings at one alpha
+for o in original similarity_ascending similarity_descending label_grouped label_alternating random_shuffle; do
+  FED_ICL_ORDER=$o python main.py
+done
+```
 
-| File | Role |
-|---|---|
-| `config.py` | All experimental knobs in one place. Change values here, run again. |
-| `data.py` | AG News loader, label space, Dirichlet partitioning, train/server/eval split. |
-| `llm.py` | Ollama interface: prompt construction, model call, label parsing, readiness check. |
-| `federation.py` | `FedICLClient` and `FedICLServer` classes. The five ordering strategies live in `FedICLClient.order_examples`. |
-| `main.py` | Runs baselines and Fed-ICL, prints per-round accuracy, writes `results.json`. |
-| `lab_notebook.md` | Chronological log of decisions, results, and reasoning. |
-| `methodology_checklist.md` | Pre-flight check for every experimental run. |
-| `requirements.txt` | numpy, requests, datasets. |
+| Parameter | Env override | Default | Controls |
+|---|---|---|---|
+| `MODEL_NAME` | `FED_ICL_MODEL` | `mistral` | Ollama model identifier. |
+| `NUM_CLIENTS` | `FED_ICL_CLIENTS` | `3` | Number of simulated clients. |
+| `NUM_ROUNDS` | `FED_ICL_ROUNDS` | `6` | Federation rounds (T in the paper). |
+| `DIRICHLET_ALPHA` | `FED_ICL_ALPHA` | `0.5` | Heterogeneity. Smaller = more non-IID. |
+| `NUM_SHOTS` | `FED_ICL_K` | `3` | Demonstrations per prompt (K in the paper). |
+| `SELECTION_STRATEGY` | `FED_ICL_SEL` | `random` | `random` or `similarity`. |
+| `ORDER_STRATEGY` | `FED_ICL_ORDER` | `original` | One of six orderings (see below). |
+| `NUM_SERVER_QUERIES` | `FED_ICL_Q` | `100` | Size of the shared server query set. |
+| `EVAL_SIZE` | `FED_ICL_EVAL` | `100` | Held-out evaluation pool, drawn from the AG News test split. |
+| `SEED` | `FED_ICL_SEED` | `42` | Random seed. Three seeds per cell is the methodology target. |
 
-## Algorithm 1 ↔ code mapping
+For the meaning of each parameter, see `glossary.md`. For the design reasoning behind the defaults, see `concepts.md`.
 
-| Paper line | Code |
-|---|---|
-| For t = 1 to T | `for t in range(1, NUM_ROUNDS + 1)` in `main.py` |
-| Lines 3–4 (relabel local data) | `client.relabel_local_data(global_context)` |
-| Lines 5–6 (predict server queries) | `client.predict_server_queries(server_queries, global_context)` |
-| Line 7 (majority-vote aggregation) | `server.aggregate_predictions(all_client_predictions)` |
-| Line 8 (evaluate global context) | `server.evaluate_context()` |
+## What the code does
 
-## Configuration
+`main.py` runs four things in order, all on the same data split:
 
-All settings live in `config.py`:
+1. **Zero-shot baseline.** No demonstrations in the prompt. Establishes how well the LLM solves the task without any in-context guidance.
+2. **Local-only baseline.** Client 0 with its own local pool only, no federation, using the same select-and-order pipeline as Fed-ICL. The decisive test of whether federation justifies its complexity.
+3. **Fed-ICL.** The full Fed-ICL-Free protocol (Wang et al., 2025): clients relabel local data using the global context, predict shared server queries, the server aggregates by majority vote, repeat T times.
+4. **Held-out evaluation.** The final global context is used as the example pool for an evaluation set drawn from the AG News test split, with the same selection and ordering rules.
 
-| Parameter | Default | What it controls |
-|---|---|---|
-| `MODEL_NAME` | `"llama3"` | Ollama model. Also tested: mistral, phi. |
-| `NUM_CLIENTS` | `3` | K — simulated clients. |
-| `NUM_ROUNDS` | `6` | T — federation rounds. |
-| `DIRICHLET_ALPHA` | `0.5` | Heterogeneity. 0.05 = extreme non-IID, 10.0 = nearly IID. |
-| `NUM_SHOTS` | `3` | In-context examples per prompt. |
-| `SELECTION_STRATEGY` | `"random"` | Or `"similarity"` (word-overlap-based). |
-| `ORDER_STRATEGY` | `"original"` | The dissertation focus — see below. |
-| `NUM_SERVER_QUERIES` | `100` | Size of the global context C. |
-| `EVAL_SIZE` | `100` | Held-out test set, never seen during federation. |
-| `SEED` | `42` | Fixed for reproducibility. Vary later for robustness checks. |
+Each run writes a JSON containing the full config, the round-by-round accuracy trajectory, the baselines, the held-out accuracy, and the parse fallback rate.
 
 ## Ordering strategies (the dissertation focus)
 
-The research question is whether the order of in-context examples affects
-federated convergence, and whether that interaction depends on data
-heterogeneity. Five orderings are implemented in `FedICLClient.order_examples`:
+The research question is whether the order of in-context examples affects federated convergence, and whether that effect interacts with data heterogeneity. Six orderings are implemented in `federation.py`:
 
-| `ORDER_STRATEGY` | What it does |
+| `ORDER_STRATEGY` | Behaviour |
 |---|---|
-| `"original"` | Examples in selection order (control). |
-| `"similarity_ascending"` | Least similar first; most similar example sits closest to the query. |
-| `"similarity_descending"` | Most similar first; tests whether early examples set context. |
-| `"label_grouped"` | All world examples, then all sports, etc. Tests class clustering. |
-| `"label_alternating"` | Round-robin across labels: world, sports, business, science, ... |
-| `"random_shuffle"` | Different order each run; quantifies the variance ordering introduces. |
+| `original` | Examples in selection order (control after the post-selection shuffle fix). |
+| `similarity_ascending` | Least similar first; most similar example closest to the query. |
+| `similarity_descending` | Most similar first. |
+| `label_grouped` | Examples sorted by label, so all of one class appear consecutively. |
+| `label_alternating` | Round-robin across labels. |
+| `random_shuffle` | Fresh random order each call; quantifies ordering-induced variance. |
 
-## Running experiment variants
+The selection rule and the ordering rule are decoupled by design. `select_examples` picks K examples; `order_examples` arranges them. Both are methods on `FedICLClient` in `federation.py`. See `concepts.md` section 4 for the rationale.
 
-Change one line in `config.py`, run `python main.py`, then rename
-`results.json` before the next run so it isn't overwritten.
+## Paper-to-code mapping
 
-```bash
-# After each run:
-mv results.json results_alpha005.json   # or whatever describes that run
-```
+| Paper notation | Code identifier | Meaning |
+|---|---|---|
+| N | `NUM_CLIENTS` | Number of clients. |
+| K | `NUM_SHOTS` | Demonstrations per prompt. |
+| T | `NUM_ROUNDS` | Federation rounds. |
+| α | `DIRICHLET_ALPHA` | Dirichlet concentration. |
+| n | `EVAL_SIZE` | Evaluation pool size. |
 
-A full first-pass sweep is roughly:
+Full Algorithm 1 mapping, including the relabel and aggregation steps, is in `code_walkthrough.md`.
 
-```text
-1. DIRICHLET_ALPHA = 0.05, 0.5, 10.0    # heterogeneity sweep    (3 runs)
-2. NUM_SHOTS       = 1, 3, 5            # shot-count sweep       (3 runs)
-3. ORDER_STRATEGY  = all five           # ordering sweep         (5 runs)
-4. (best ordering) × alpha 0.05, 10.0   # interaction probe      (2 runs)
-```
+## Reproducibility
 
-## Roadmap
+- Every result file records the full config (model, α, K, T, selection, ordering, seed, evaluation pool size) and the parse fallback rate from that run.
+- Random seeds are fixed and threaded explicitly through the data partition, selection, and ordering steps.
+- Output filenames are auto-generated from the config so two runs with different parameters cannot overwrite each other.
+- A `methodology_checklist.md` lists the pre-flight checks (Ollama up, model pulled, expected wall-clock, free disk for the JSON) to run before each experiment.
 
-Short-term:
-- Heterogeneity sweep across α ∈ {0.05, 0.5, 10.0}
-- Ordering comparison across all five strategies
-- Interaction analysis (best ordering at each α extreme)
-- GPU server access for faster iteration and smaller-model probes
+## Project status
 
-Medium-term:
-- SBERT-based similarity selection (KATE-style) as an alternative to word overlap
-- Heterogeneous LLMs across clients (already supported via the `model` argument
-  on `FedICLClient`)
-- Multiple seeds per condition once the methodology is locked in
+The current experimental focus is establishing reference numbers across base models (llama3, mistral, phi) on the tightened pipeline before launching the full ordering and heterogeneity sweep. See `lab_notebook.md` for the latest results. The dissertation deadline is 8 August 2026.
 
 ## References
 
-- Wang, X., Wu, Z., Sun, L., et al. *Federated In-Context Learning.* ICML 2025.
-- McMahan, H. B., et al. *Communication-Efficient Learning of Deep Networks
-  from Decentralized Data.* AISTATS 2017.
-- Liu, J., et al. *What Makes Good In-Context Examples for GPT-3?* DeeLIO
-  2022 (KATE).
+- Wang, R., et al. *Federated In-Context Learning: Iterative Refinement for Improved Answer Quality.* ICML 2025.
+- McMahan, H. B., et al. *Communication-Efficient Learning of Deep Networks from Decentralized Data.* AISTATS 2017.
+- Liu, J., et al. *What Makes Good In-Context Examples for GPT-3?* DeeLIO 2022 (KATE).
+- Lu, Y., et al. *Fantastically Ordered Prompts and Where to Find Them.* ACL 2022.
+- Zhao, Z., et al. *Calibrate Before Use: Improving Few-Shot Performance of Language Models.* ICML 2021.
 - Brown, T., et al. *Language Models are Few-Shot Learners.* NeurIPS 2020.
-- Min, S., et al. *Rethinking the Role of Demonstrations: What Makes
-  In-Context Learning Work?* EMNLP 2022.
+- Min, S., et al. *Rethinking the Role of Demonstrations: What Makes In-Context Learning Work?* EMNLP 2022.
+- Hsu, T.-M. H., Qi, H., Brown, M. *Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification.* arXiv:1909.06335, 2019.
+- Li, T., et al. *Federated Optimization in Heterogeneous Networks.* MLSys 2020.
+- Zhang, X., Zhao, J., LeCun, Y. *Character-level Convolutional Networks for Text Classification.* NeurIPS 2015 (AG News dataset).
