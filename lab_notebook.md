@@ -629,3 +629,22 @@ Llama3's 0.1% rate suggests it silently maps technology stories to "science" and
 - "politics (not directly falling under the provided categories,)"
 - "entertainment"
 - "Not Applicable (N/A) -"
+
+---
+
+### 2026-05-19 (continued)  Investigation of the AG News label name
+
+Before considering renaming "science" to "sci/tech" (option 2 above), checked the actual source of the AG News class names. The 2015 Zhang/Zhao/LeCun paper does not name the four classes; it only describes the construction procedure (the four largest classes from the original AG corpus). The names come from `classes.txt` shipped with the dataset itself.
+
+**What the canonical sources say.** The HuggingFace dataset card and the Papers with Code page both give the official names as:
+
+1. World
+2. Sports
+3. Business
+4. Sci/Tech
+
+**What downstream sources say.** Many tutorial reproductions and Kaggle mirrors simplify the fourth class to "Science", omitting the "/Tech". This is not wrong as a user-facing label, but it is not the dataset's own naming.
+
+**Consequence.** Our current code uses "science", which is a defensible simplification but is not the dataset's canonical name. Mistral's narrow interpretation of "science" (lab science only, no technology) is consistent with the simplification rather than the dataset's intent. Both reading are valid choices; neither is incorrect.
+
+**Decision deferred.** Choosing among the three options (keep "science", rename to "sci/tech", broaden inline) requires a clear story for the dissertation. Since any choice will require re-running both reference models (and eventually all three with phi), the decision should be made once and committed to before the full ordering sweep, not during it.
