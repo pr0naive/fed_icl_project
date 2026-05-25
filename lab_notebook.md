@@ -543,7 +543,7 @@ Output: `results_llama3_alpha0.5_K3_T6_seed42_order-original.json`.
 
 added glossary.md: Definitions for every term and code variable.
 
-### 2026-05-19 — Reference run on mistral 7B, tightened pipeline
+### 2026-05-19  Reference run on mistral 7B, tightened pipeline
 
 **Run.** `FED_ICL_MODEL=mistral FED_ICL_ALPHA=0.5 FED_ICL_K=3 FED_ICL_ORDER=original FED_ICL_SEED=42 python main.py`
 Wall-clock: 9,789 s (2h 43m).
@@ -574,3 +574,58 @@ Same configuration, same seed, same Dirichlet partition (113 / 80 / 57) as the l
 **Held-out gap.** Mistral's held-out accuracy (75%) is 5pp lower than its Round 6 in-pool accuracy (80%). On llama3 these numbers were equal. Two candidate explanations: mistral may be overfitting to the server queries across rounds, or the higher parse fallback rate is biting harder on the held-out set. Not enough information to distinguish; worth raising with Dr. Jin.
 
 **Parse fallback rate.** 3.0% (109 / 3,600), 30x higher than llama3's 0.1% (3 / 3,600). Still well below the 10% threshold the methodology section flags as parser-influenced, but the gap is large enough to warrant inspection of what mistral is actually emitting. See next entry.
+
+
+---
+
+### 2026-05-19 (continued)  Inspection of mistral parse failures
+
+The 30x gap in parse fallback rate between mistral (3.0%) and llama3 (0.1%) was large enough that I inspected the stored sample responses to see what was actually failing. The samples are written into `results_*.json` under `parse_stats.sample_unparseable`.
+
+**Method.** One-shot Python inspection:
+
+```bash
+python3 -c "
+import json
+with open('results_mistral_alpha0.5_K3_T6_seed42_order-original.json') as f:
+    data = json.load(f)
+for r in data['parse_stats'].get('sample_unparseable', []):
+    print(repr(r))
+"
+```
+
+All 30 stored samples examined.
+
+**Distribution of proposed labels.**
+
+| Proposed label   | Count | Common hedging |
+|------------------|-------|----------------|
+| technology       | 22    | "(a subcategory of science)", "(a subcategory of business)" |
+| politics         | 5     | "(a subcategory of world)", "(not directly falling under the provided categories)" |
+| entertainment    | 1     | unhedged |
+| Not Applicable   | 1     | "(N/A) -" |
+| ambiguous        | 1     | model began generating a new prompt instead of answering |
+
+**Interpretation.** The failures are not random parser misfires. They are structured: mistral interprets the AG News four-class taxonomy as too coarse for its internal label space and proposes extensions in two systematic directions, technology (between science and business) and politics (overlapping with world). The hedging is the most informative part: in almost every case mistral names which of the four classes it would have chosen if forced. This is the model recognising the task constraint and refusing to commit, not the model misunderstanding the task.
+
+Llama3's 0.1% rate suggests it silently maps technology stories to "science" and political stories to "world". This is a calibration difference rather than an accuracy difference; the surface accuracies on the four classes are comparable.
+
+**Connection to Min et al. (2022).** Min et al. argued that the label *space* matters more than label *correctness* for ICL performance. The mistral pattern is a specific instance: a model presented with a label space coarser than its internal taxonomy fails predictably, and the failures cluster on the boundaries between conflated classes. This connection strengthens the literature review's payoff and gives section 3.7 of the proposal something concrete to say about why parse fallback rates differ across models.
+
+**Open question for Dr. Jin.** Three ways to handle this before locking in the full ordering sweep:
+
+1. Stay with "science" as currently coded. Report the 3% fallback rate per condition and the systematic nature of the failures. Methodologically the cleanest, no re-runs required.
+2. Rename to "sci/tech" to match the dataset's canonical label name. Addresses the science/technology issue but not the world/politics issue. Requires re-running both reference models.
+3. Modify the prompt instruction to broaden each label inline ("science (includes technology)", "world (includes political stories)"). Addresses both clusters of failures but adds prompt complexity that may itself bias the ordering experiments.
+
+**Per-class accuracy implication.** When the per-class accuracy breakdown is computed for the dissertation, expect mistral's "science" and "world" classes to behave differently from llama3's, because the parser fallback hits those classes' totals asymmetrically across the two models. The per-class breakdown should report parse-failed counts separately so the underlying accuracy is not contaminated by fallback behaviour.
+
+**Sample responses (representative subset of 30).**
+
+- "technology (a subcategory of science)"
+- "technology (a subcategory of business)"
+- "technology (or business)"
+- "politics (which can be considered a subcategory of world)"
+- "politics (not directly falling under the provided categories,)"
+- "entertainment"
+- "Not Applicable (N/A) -"
