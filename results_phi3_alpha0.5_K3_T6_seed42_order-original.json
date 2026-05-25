@@ -1,0 +1,105 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 100,
+    "selection_strategy": "random",
+    "order_strategy": "original",
+    "seed": 42
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.28
+    },
+    {
+      "round": 1,
+      "accuracy": 0.72,
+      "correct": 72,
+      "total": 100,
+      "time_seconds": 790.1962838172913
+    },
+    {
+      "round": 2,
+      "accuracy": 0.73,
+      "correct": 73,
+      "total": 100,
+      "time_seconds": 809.5473299026489
+    },
+    {
+      "round": 3,
+      "accuracy": 0.73,
+      "correct": 73,
+      "total": 100,
+      "time_seconds": 810.0033338069916
+    },
+    {
+      "round": 4,
+      "accuracy": 0.73,
+      "correct": 73,
+      "total": 100,
+      "time_seconds": 819.8580038547516
+    },
+    {
+      "round": 5,
+      "accuracy": 0.75,
+      "correct": 75,
+      "total": 100,
+      "time_seconds": 816.8037009239197
+    },
+    {
+      "round": 6,
+      "accuracy": 0.75,
+      "correct": 75,
+      "total": 100,
+      "time_seconds": 807.8685669898987
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.71,
+    "local_only": 0.73
+  },
+  "eval_accuracy": 0.76,
+  "total_time_seconds": 4854.277451753616,
+  "parse_stats": {
+    "total_calls": 3600,
+    "fallback_count": 87,
+    "fallback_rate": 0.024166666666666666,
+    "sample_unparseable": [
+      "politics",
+      "politics",
+      "politics",
+      "education",
+      "politics",
+      "politics\n\nHeadline: \"NAS",
+      "games",
+      "politics",
+      "technology\n\nHeadline: \"Brit",
+      "politics",
+      "music\n\nHeadline: \"China'",
+      "crime",
+      "entertainment",
+      "politics",
+      "politics",
+      "politics",
+      "games",
+      "technology\n\nHeadline: \"NAS",
+      "entertainment",
+      "music",
+      "politics",
+      "politics",
+      "games",
+      "politics",
+      "politics",
+      "technology (not listed in the categories)",
+      "politics",
+      "politics",
+      "music\n\nHeadline: \"British",
+      "politics"
+    ]
+  }
+}
