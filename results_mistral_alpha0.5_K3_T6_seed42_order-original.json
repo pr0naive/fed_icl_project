@@ -1,0 +1,105 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 100,
+    "selection_strategy": "random",
+    "order_strategy": "original",
+    "seed": 42
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.28
+    },
+    {
+      "round": 1,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 1578.7659158706665
+    },
+    {
+      "round": 2,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 1664.8943309783936
+    },
+    {
+      "round": 3,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 1634.6508181095123
+    },
+    {
+      "round": 4,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 1641.248684167862
+    },
+    {
+      "round": 5,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 1637.3545219898224
+    },
+    {
+      "round": 6,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 1631.769821882248
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.79,
+    "local_only": 0.77
+  },
+  "eval_accuracy": 0.75,
+  "total_time_seconds": 9788.684381008148,
+  "parse_stats": {
+    "total_calls": 3600,
+    "fallback_count": 109,
+    "fallback_rate": 0.03027777777777778,
+    "sample_unparseable": [
+      "entertainment",
+      "Not Applicable (N/A) -",
+      "technology (not exactly one of the given categories,",
+      "technology (a subcategory of science)",
+      "technology (a subcategory of science)",
+      "technology (a subcategory of business)",
+      "technology (or business)",
+      "technology (which can be considered a subcategory of",
+      "technology (although it's a bit of a",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "politics\n\nHeadline: \"NASA",
+      "technology (which can be considered a subcategory of",
+      "technology (although it could also be considered \"business",
+      "technology (a subcategory of business)",
+      "politics (which can be considered a subcategory of",
+      "politics (not directly falling under the provided categories,",
+      "technology (or \"science\" if you consider technology",
+      "technology (a subcategory of science)",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "politics (which can be considered a subcategory of",
+      "technology (implied from the use of wireless technology",
+      "politics (although it could also be considered news,",
+      "technology (can be considered as a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of"
+    ]
+  }
+}
