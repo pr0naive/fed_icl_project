@@ -542,3 +542,35 @@ Output: `results_llama3_alpha0.5_K3_T6_seed42_order-original.json`.
 **Commits.**
 
 added glossary.md: Definitions for every term and code variable.
+
+### 2026-05-19 — Reference run on mistral 7B, tightened pipeline
+
+**Run.** `FED_ICL_MODEL=mistral FED_ICL_ALPHA=0.5 FED_ICL_K=3 FED_ICL_ORDER=original FED_ICL_SEED=42 python main.py`
+Wall-clock: 9,789 s (2h 43m).
+Output: `results_mistral_alpha0.5_K3_T6_seed42_order-original.json`.
+
+Same configuration, same seed, same Dirichlet partition (113 / 80 / 57) as the llama3 run. Only the model changed.
+
+**Results.**
+
+| Metric          | mistral 7B | llama3 (prior run) |
+|-----------------|------------|---------------------|
+| Zero-shot       | 79%        | 74%                 |
+| Local-only      | 77%        | 74%                 |
+| Fed-ICL R1      | 76%        | 81%                 |
+| Fed-ICL R2      | 79%        | 82%                 |
+| Fed-ICL R3      | 81%        | 78%                 |
+| Fed-ICL R4      | 81%        | 82%                 |
+| Fed-ICL R5      | 79%        | 80%                 |
+| Fed-ICL R6      | 80%        | 81%                 |
+| Held-out        | 75%        | 81%                 |
+| Federation gain | +3pp       | +7pp                |
+| Parse fallback  | 3.0%       | 0.1%                |
+
+**H3 implication.** Federation gain is *larger* on llama3 (+7pp) than on mistral (+3pp). This is the opposite of the "weaker models benefit more from collaboration" framing H3 currently uses. With only two models at one configuration, this is not decisive, but it is enough to change how H3 is stated in the proposal. H3 reformulated in section 1.3 to make the direction of capability dependence something to be determined from the data rather than predicted in advance.
+
+**Convergence trajectory.** Mistral climbs gradually through rounds 1-4 (76, 79, 81, 81) before settling at 79-80 for rounds 5-6. Llama3 hit 81% at round 1 and plateaued. If ordering effects emerge from multi-round refinement, mistral is the more discriminating testbed for them at α=0.5; the ordering sweep should weight mistral configurations more heavily in the early experiments.
+
+**Held-out gap.** Mistral's held-out accuracy (75%) is 5pp lower than its Round 6 in-pool accuracy (80%). On llama3 these numbers were equal. Two candidate explanations: mistral may be overfitting to the server queries across rounds, or the higher parse fallback rate is biting harder on the held-out set. Not enough information to distinguish; worth raising with Dr. Jin.
+
+**Parse fallback rate.** 3.0% (109 / 3,600), 30x higher than llama3's 0.1% (3 / 3,600). Still well below the 10% threshold the methodology section flags as parser-influenced, but the gap is large enough to warrant inspection of what mistral is actually emitting. See next entry.
