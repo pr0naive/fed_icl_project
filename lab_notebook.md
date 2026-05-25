@@ -648,3 +648,36 @@ Before considering renaming "science" to "sci/tech" (option 2 above), checked th
 **Consequence.** Our current code uses "science", which is a defensible simplification but is not the dataset's canonical name. Mistral's narrow interpretation of "science" (lab science only, no technology) is consistent with the simplification rather than the dataset's intent. Both reading are valid choices; neither is incorrect.
 
 **Decision deferred.** Choosing among the three options (keep "science", rename to "sci/tech", broaden inline) requires a clear story for the dissertation. Since any choice will require re-running both reference models (and eventually all three with phi), the decision should be made once and committed to before the full ordering sweep, not during it.
+
+### 2026-05-25  Reference run on phi3, tightened pipeline (completes the three-model picture)
+
+**Run.** `caffeinate -i python main.py` with FED_ICL_MODEL=phi3, α=0.5, K=3, T=6, seed=42.
+Wall-clock: 4,854 s (1h 21m). Output: `results_phi3_alpha0.5_K3_T6_seed42_order-original.json`.
+
+**Three-model results.**
+
+| Metric          | phi3 | mistral 7B | llama3 |
+|-----------------|------|------------|--------|
+| Zero-shot       | 71%  | 79%        | 74%    |
+| Local-only      | 73%  | 77%        | 74%    |
+| Fed-ICL R6      | 75%  | 80%        | 81%    |
+| Held-out        | 76%  | 75%        | 81%    |
+| Federation gain | +2pp | +3pp       | +7pp   |
+| Parse fallback  | 2.4% | 3.0%       | 0.1%   |
+
+**H3 verdict.** Federation gain is monotonic in capability but in the opposite direction H3 originally predicted. Stronger models benefit more, not less. The original H3 framing ("weaker models benefit more") is unsupported. Reformulated H3 in proposal section 1.3 to make capability dependence a question rather than a prediction, and to introduce the possibility of a capability floor below which federation provides no useful gain. This is now the most interesting open question for Friday's meeting with Dr. Jin.
+
+**Convergence trajectory pattern.** Three different patterns at the same α=0.5:
+- llama3: 81% at round 1, plateaus.
+- mistral: gradual climb 76→79→81→81→79→80, peaking at rounds 3-4.
+- phi3: very gradual climb 72→73→73→73→75→75, still climbing at round 6.
+
+Weaker models converge more slowly. This is consistent with the capability-floor interpretation: a weak model needs more rounds of refinement to extract whatever benefit federation can offer, and may not have finished converging at T=6. The ordering sweep on phi3 should consider extending T beyond 6 if the slow-climb pattern continues.
+
+**Parse fallback rate.** 2.4% (87 of 3,600), in between mistral (3.0%) and llama3 (0.1%). Pending inspection of stored sample responses to see whether phi3 fails in the same "technology"/"politics" way as mistral, or in a third distinct way. The pattern matters for the cross-model side-finding about label-space disagreement.
+
+**Held-out vs in-pool comparison.** Three different patterns:
+- llama3: held-out 81%, R6 81%, equal.
+- mistral: held-out 75%, R6 80%, -5pp (overfits to server queries).
+- phi3: held-out 76%, R6 75%, +1pp (within noise).
+
