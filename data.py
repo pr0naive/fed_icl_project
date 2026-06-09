@@ -20,7 +20,7 @@ _AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
 AG News has 120k training examples, far more than ICL needs.
 We take a random subset for comparable scale to the synthetic data."""
 def _load_ag_news(num_examples, seed):
-    ds = load_dataset("ag_news", split="train")
+    ds = load_dataset("fancyzhx/ag_news", split="train")
     rng = np.random.default_rng(seed)
     indices = rng.choice(len(ds), size=num_examples, replace=False)
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
@@ -29,7 +29,7 @@ for i in indices]
 RAW_DATA = _load_ag_news(num_examples=350, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed):
-    ds = load_dataset("ag_news", split="test")
+    ds = load_dataset("fancyzhx/ag_news", split="test")
     rng = np.random.default_rng(seed + 1)
     indices = rng.choice(len(ds), size=num_examples, replace=False)
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])

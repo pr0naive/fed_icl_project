@@ -729,3 +729,95 @@ This is consistent with the general observation that instruction-following degra
 - The cross-model taxonomy disagreement story is now a three-model side-finding suitable for inclusion in the dissertation.
 - The phi3 prompt-continuation failures (~3 of 30 samples) suggest that prompt format may need to be hardened for the smaller model. Not urgent for the proposal but worth raising on Friday.
 - Per-class accuracy reporting in the ordering experiments must account for these asymmetric failure patterns. The "world" class on phi3 is artificially low because political stories are being thrown out as fallbacks; the "science" class on mistral is artificially low for the same reason with technology stories.
+
+
+2026-05-29 Meeting with Dr. Jin: directives
+Five outcomes from the supervision meeting.
+
+Label decision. Dr. Jin's view is to keep "science" and report the phi3
+parse inaccuracy as a documented limitation rather than rerun all
+reference experiments under the canonical "Sci/Tech" label. I disagreed
+but did not persuade her. Action: run a small canonical-label pilot on
+the side (one model, one α, one seed) as evidence to revisit the
+decision openly. If results don't shift the picture, accept the
+decision and write the limitation up clearly in the dissertation
+methodology.
+
+Harder dataset for llama3. Llama3 plateaus at round 1 on AG News, which
+leaves no headroom for convergence experiments. Once GPU access is
+sorted, try a harder dataset on llama3. Candidates in increasing
+difficulty: DBpedia (14-class), 20 Newsgroups (20-class, longer texts),
+TREC, Banking77, CLINC150. DBpedia or 20 Newsgroups are likely the
+cleanest fit because they don't require a parser rewrite.
+
+Pool-size sweep. Dr. Jin asked whether the total pool size affects
+federation gain. Reduce the current pool of 250 training examples to
+levels like 10, 50, 100 and observe how gain responds. Expectation:
+smaller pools should show larger gains, because local-only collapses
+when each client has only a few examples and federation has more room
+to add value. Cheap to run.
+
+Sequential strategy. Once the optimal pool size K* is identified, fix
+the pool size at K* and run the heterogeneity sweep only at that level.
+This narrows the design but tests H1 and H2 only at one shot count;
+worth checking next meeting whether that's the trade Dr. Jin wants.
+
+GPU access. Dr. Jin recommended using the Windows virtual desktop. I
+will pursue both that and the IT escalation for a dedicated GPU node.
+
+2026-06-08 Dataset ID migration and Windows GPU setup
+Three things happened today.
+
+Dataset ID migration. HuggingFace `datasets>=3.0` and
+`huggingface_hub>=0.26` deprecated the bare `ag_news` identifier;
+load_dataset("ag_news", ...) now raises HfUriError on resolution.
+Updated data.py to use the canonical fancyzhx/ag_news path. Same
+underlying Zhang/Zhao/LeCun 2015 data, only the HF routing changed.
+Same change needs pulling onto the MacBook before any new MacBook
+runs, otherwise the two machines silently diverge.
+
+Windows virtual desktop set up. Machine: wvd2gpu2-201. GPU: NVIDIA
+A10-12Q (12 GB vGPU slice of an A10), driver 553.62, CUDA 12.4.
+Initial Python install failed; installed Anaconda and created a
+fedicl conda env. Installed requirements with pip (no conda install,
+to avoid mixing package managers). Pulled llama3, mistral, phi3 via
+Ollama for Windows. torch.cuda.is_available() returns True. ollama
+ps reports the loaded model at 100% GPU during inference.
+
+Reproducibility check: llama3, K=3, α=0.5, seed=42, n=100. First
+reference run on the Windows GPU machine.
+
+Metric            Windows GPU    MacBook
+Zero-shot         75.0%          74%
+Local-only        75.0%          74%
+Fed-ICL R6        80.0%          81%
+Held-out          79.0%          81%
+Federation gain   +5.0pp         +7pp
+Parse fallback    0.1%           0.1%
+Wall-clock        8,822 s        7,800 s
+
+Round trajectory: 28 → 82 → 82 → 77 → 82 → 80 → 80. Not monotonic;
+the round-3 dip to 77% is new. MacBook trajectory plateaued cleanly
+at 81% from round 1 onwards. Differences are within ±2pp, inside the
+Wilson 95% CI for n=100 (≈±8pp), so this is most likely seed-level
+noise rather than a pipeline regression. To confirm, plan to rerun
+seeds 43 and 44 on both machines and compare trajectories.
+
+Wall-clock verdict: the Windows GPU is not faster than the MacBook
+for this workload. 2h27m vs 2h10m. Per "predict server queries" call
+averaged ≈5s, which is roughly 10× too slow for llama3 8B on an A10
+(should be 0.3-0.8 s/call). nvidia-smi showed GPU util flickering
+5-10% with the model 100% on GPU, consistent with queueing behind
+other VMs on the same physical card for time-slices too thin for
+compute-bursty workloads. The A10-12Q profile is "Q" (virtual
+workstation, intended for graphics), shared across multiple VMs.
+
+Decision: do not run sweeps on the virtual desktop in its current
+state. Continue on MacBook in parallel while pushing IT (James Byrne,
+Digital Research Compute Lead) for either a less-contended vGPU
+profile or a dedicated GPU node. Email sent today.
+
+Result JSON from this run (results_llama3_alpha0.5_K3_T6_seed42_
+order-original.json) held locally, not committed to repo, pending
+seed-43/44 reruns to determine whether the round-3 dip is a stable
+trajectory or a one-off.
