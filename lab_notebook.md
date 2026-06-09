@@ -681,3 +681,51 @@ Weaker models converge more slowly. This is consistent with the capability-floor
 - mistral: held-out 75%, R6 80%, -5pp (overfits to server queries).
 - phi3: held-out 76%, R6 75%, +1pp (within noise).
 
+### Phi3 parse failure inspection 
+
+Inspected all 30 stored samples from `results_phi3_alpha0.5_K3_T6_seed42_order-original.json`.
+
+python3 -c "
+import json
+with open('results_phi3_alpha0.5_K3_T6_seed42_order-original.json') as f:
+    data = json.load(f)
+print('Fallback rate:', data['parse_stats']['fallback_rate'])
+print('Total calls:', data['parse_stats']['total_calls'])
+print()
+for r in data['parse_stats'].get('sample_unparseable', [])[:30]:
+    print(repr(r))
+"
+
+**Distribution of proposed labels.**
+
+| Proposed label | Count | Notes |
+|---|---|---|
+| politics | 17 | Mostly unhedged single-word emissions. |
+| technology | 3 | One hedged "(not listed in the categories)". |
+| games | 3 | All unhedged. |
+| music | 3 | Two end in "\n\nHeadline:" suggesting model began generating a new prompt. |
+| entertainment | 2 | Unhedged. |
+| education | 1 | Unhedged. |
+| crime | 1 | Unhedged. |
+
+**Comparison across three models.**
+
+| Model | Primary OOV label | Secondary | Hedging |
+|---|---|---|---|
+| llama3 (8B, 0.1% fallback) | None | — | Silent compliance |
+| mistral 7B (3.0%) | technology (73%) | politics (17%) | Explicit "(subcategory of X)" |
+| phi3 (3.8B, 2.4%) | politics (57%) | seven others (10% or less each) | None |
+
+**Interpretation.** Three distinct patterns, varying systematically with capability:
+1. Llama3 obeys the four-class constraint silently, mapping technology to "science" and political stories to "world" without flagging the mismatch.
+2. Mistral obeys the constraint while flagging the mismatch through hedging.
+3. Phi3 partially does not obey the constraint, proposing labels outside the space without hedging, and occasionally treating the prompt as a continuation task rather than a classification task.
+
+This is consistent with the general observation that instruction-following degrades with model size (see Sanh et al. 2022). The specific pattern here strengthens the literature review's connection to Min et al. (2022) on label-space effects in ICL.
+
+**Why politics dominates phi3 failures.** Most plausible explanation: AG News (2004) used "world" to cover both international affairs and political stories. Models trained on more recent web text distinguish geopolitics from political reporting and lean toward "politics" as a separate label. Phi3, being smaller, leans into this drift more aggressively than mistral. Llama3 silently absorbs the drift into "world".
+
+**Implications for the ordering sweep.**
+- The cross-model taxonomy disagreement story is now a three-model side-finding suitable for inclusion in the dissertation.
+- The phi3 prompt-continuation failures (~3 of 30 samples) suggest that prompt format may need to be hardened for the smaller model. Not urgent for the proposal but worth raising on Friday.
+- Per-class accuracy reporting in the ordering experiments must account for these asymmetric failure patterns. The "world" class on phi3 is artificially low because political stories are being thrown out as fallbacks; the "science" class on mistral is artificially low for the same reason with technology stories.
