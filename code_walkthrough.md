@@ -6,19 +6,29 @@ The companion files are `concepts.md` (the conceptual reference) and `glossary.m
 
 ## Repository layout
 
+## Repo layout
+
+```
 fed_icl_project/
-|-- config.py                  Parameters; env-variable overridable.
-|-- data.py                    AG News loading; Dirichlet partition; train/test split discipline.
-|-- llm.py                     Ollama interface; prompt construction; label parser with fallback logging.
-|-- federation.py              FedICLClient and FedICLServer; selection and ordering strategies.
-|-- main.py                    Entry point; baselines; Fed-ICL loop; held-out evaluation; JSON output.
-|-- requirements.txt
-|-- README.md
-|-- glossary.md
-|-- code_walkthrough.md        (this file)
-|-- lab_notebook.md            Running log of decisions and results.
-|-- methodology_checklist.md   Pre-flight checks before each run.
-|-- results_*.json             Run outputs, auto-named from the config.
+├── config.py                  Parameters; env-variable overridable.
+├── data.py                    AG News loading; Dirichlet partition; train/test split discipline.
+├── llm.py                     Ollama interface; prompt construction; label parser with fallback logging.
+├── federation.py              FedICLClient and FedICLServer; selection and ordering strategies.
+├── main.py                    Entry point; baselines; Fed-ICL loop; held-out evaluation; JSON output.
+├── requirements.txt
+├── README.md
+├── glossary.md
+├── code_walkthrough.md        (this file)
+├── lab_notebook.md            Running log of decisions and results.
+├── methodology_checklist.md   Pre-flight checks before each run.
+├── figures/
+│   └── multi_seed_validation/ Plots produced from the 5-seed extension.
+├── scripts/
+│   └── plot_multi_seed.py     Regenerates the multi-seed figures from result JSONs.
+└── results_*.json             Run outputs, auto-named from the config.
+```
+
+Throughout this document, code variable names appear in `CODE_FONT`. The same names appear in `glossary.md` with one-line definitions; this file gives the why behind each.
 
 Throughout this document, code variable names appear in `CODE_FONT`. The same names appear in `glossary.md` with one-line definitions; this file gives the *why* behind each.
 
