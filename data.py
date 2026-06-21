@@ -11,7 +11,7 @@ from config import SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_
 np.random.seed(SEED)
 
 LABEL_SPACE = ["world", "sports", "business", "science"]
-_AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
+_AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "sci/tech"}
 
 
 
