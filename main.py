@@ -6,7 +6,7 @@ import numpy as np
 from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
-    NUM_SERVER_QUERIES, EVAL_SIZE,
+    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -78,6 +78,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
             "selection_strategy": SELECTION_STRATEGY,
             "order_strategy": ORDER_STRATEGY,
             "seed": SEED,
+            "client_pool_size": CLIENT_POOL_SIZE,
         },
         "rounds": [{"round": 0, "accuracy": init_eval["accuracy"]}],
         "baselines": {},
@@ -86,7 +87,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     total_start = time.time()
     for t in range(1, NUM_ROUNDS + 1):
         round_start = time.time()
-        print(f"\n  ── Round {t}/{NUM_ROUNDS} ──")
+        print(f"\n  -- Round {t}/{NUM_ROUNDS} --")
         global_context = server.get_global_context()
         all_predictions = []
         for k, client in enumerate(clients):
@@ -114,7 +115,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     total_time = time.time() - total_start
 
     # Held-out evaluation, now using the same select+order pipeline.
-    print(f"\n  ── Held-out test ({len(eval_set)} examples; ordering applied) ──")
+    print(f"\n  -- Held-out test ({len(eval_set)} examples; ordering applied) --")
     final_context = server.get_global_context()
     final_client  = FedICLClient(client_id=-1, local_data=final_context, model=MODEL_NAME)
     eval_correct = 0
@@ -193,6 +194,7 @@ def main():
         f"_alpha{DIRICHLET_ALPHA}"
         f"_K{NUM_SHOTS}"
         f"_T{NUM_ROUNDS}"
+        f"_pool{CLIENT_POOL_SIZE}"
         f"_seed{SEED}"
         f"_order-{ORDER_STRATEGY}.json"
     )

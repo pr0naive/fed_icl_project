@@ -6,7 +6,7 @@ Fed-ICL Replication — Data Module (v2 - Harder Task)
 import numpy as np
 from datasets import load_dataset
 from numpy.random import seed
-from config import SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE
+from config import SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE
 
 np.random.seed(SEED)
 
@@ -26,7 +26,7 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = _load_ag_news(num_examples=350, seed=SEED)
+RAW_DATA = _load_ag_news(num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed):
     ds = load_dataset("fancyzhx/ag_news", split="test")
@@ -102,6 +102,7 @@ def prepare_experiment():
     print(f"  Evaluation set (test):    {len(eval_set)} drawn from ag_news split='test')")
     print(f"  Server queries:    {len(server_queries)}")
     print(f"  Client pool:       {len(client_pool)}")
+    print(f"  (configured pool:  {CLIENT_POOL_SIZE})")
     print(f"  Dirichlet alpha:   {DIRICHLET_ALPHA}")
     print()
 
