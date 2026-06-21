@@ -988,3 +988,19 @@ or 45 runs if extended to 5 seeds.
 - Decision required: prioritise pool-size sweep (Dr. Jin's original directive)
   or heterogeneity sweep (more theoretically central given the partition-
   structure framing).
+
+  ### 2026-06-21 CLIENT_POOL_SIZE implementation, pool-size sweep launched
+
+Implemented `CLIENT_POOL_SIZE` as an environment-variable-overridable parameter in `config.py`, plumbed through `data.py` so `RAW_DATA` derives total examples from `NUM_SERVER_QUERIES + CLIENT_POOL_SIZE`, and into the results filename in `main.py`. Default 250 to preserve existing behaviour. Smoke test at pool=50 with phi3 seed=42 confirmed the filename now writes `pool50` and the data summary reports a configured pool size matching the env var. Federation gain at pool=50: +1pp, very close to the pool=250 reference (+1pp), suggesting the pool-size effect at α=0.5/seed=42 may be modest for phi3.
+
+Sweep design: 4 pool sizes × 3 models × 3 seeds = 36 runs. Pool sizes chosen as 30, 60, 120, 500 (roughly geometric spacing). Pool=250 already covered by the multi-seed validation runs. Seeds 42, 7, 13 chosen since they characterise the existing variance landscape (modest gain, large gain, near-zero gain respectively). Launched via a shell script `run_pool_sweep.sh` that creates 36 detached tmux sessions in sequence.
+
+The sweep is currently in flight. With 36 concurrent processes sharing a single Ollama instance at `NUM_PARALLEL=1`, each run takes roughly its serial time times the queue depth. Wall-clock estimate revised upward from 6 hours to 12-18 hours after observing 2 completions in the first 1.5 hours. GPU is pegged at 100% utilisation with 16.5 GB VRAM in use, ollama responsive, no signs of failure. Expected completion overnight or early Monday morning.
+
+Lesson noted for future sweeps: 36 concurrent runs do not finish 36× faster than serial because total GPU work is identical and queue contention slows individual runs proportionally. For sweeps of this size, batched submission (12 at a time, three batches) gives faster wall clock and predictable intermediate results.
+
+Bug fixes on main: the output filename used `NUM_SHOTS` where it should have used `NUM_CLIENTS`. Both equal 3 in current config so existing files are labelled correctly by accident, but the variable name was misleading and the bug would surface if `NUM_SHOTS` and `NUM_CLIENTS` diverged. Also fixed a latent indentation bug in `print_summary` where the federation-gain print sat outside the conditional that defines `local_only`. Both pushed to main; existing data is unaffected.
+
+Two branches created for the post-sweep work: `sci-tech-label-pilot` (the canonical Sci/Tech label experiment Dr. Jin and I agreed to revisit on 2026-05-29) and `harder-dataset-experiment` (DBpedia loader added, switchable via `FED_ICL_DATASET` env var). Neither tested yet, awaiting sweep completion.
+
+**Pending.** Sweep completion. Pool-size results pull and plot extension. Pilot runs on the two branches. Email to Dr. Jin Tuesday evening with one-paragraph preview before the 2026-06-24 supervision.
