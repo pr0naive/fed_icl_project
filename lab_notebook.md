@@ -681,7 +681,7 @@ Weaker models converge more slowly. This is consistent with the capability-floor
 - mistral: held-out 75%, R6 80%, -5pp (overfits to server queries).
 - phi3: held-out 76%, R6 75%, +1pp (within noise).
 
-### Phi3 parse failure inspection 
+### 2026-06-08 Phi3 parse failure inspection 
 
 Inspected all 30 stored samples from `results_phi3_alpha0.5_K3_T6_seed42_order-original.json`.
 
@@ -821,3 +821,95 @@ Result JSON from this run (results_llama3_alpha0.5_K3_T6_seed42_
 order-original.json) held locally, not committed to repo, pending
 seed-43/44 reruns to determine whether the round-3 dip is a stable
 trajectory or a one-off.
+
+### 2026-06-16 L4 access on mcrugcomp01 and three-seed validation
+
+**Context: the eight-day gap.** No technical entries since 2026-06-08 because no compute was available. The Windows vGPU on wvd2gpu2-201 produced ~5 s/call on llama3 8B (compared with 0.3–0.8 s/call expected for an A10), which the previous entry attributed to time-slice contention on the A10-12Q "Q" profile shared across multiple VMs. At that rate a single reference run took 2h27m, and the planned pool-size and heterogeneity sweeps would have taken weeks. Continuing on the MacBook in parallel produced two more reference runs at α=0.05 and α=10.0 but exhausted MacBook thermals for sustained work.
+
+Email to IT team sent 2026-06-09 requesting either a less-contended vGPU profile or a dedicated GPU node. Follow-up 2026-06-12 with the latency benchmark data attached. Resolution arrived 2026-06-16 morning via Toby (Research IT) granting access to the mcrugcomp01 compute server. Acknowledgement here that this delay was the binding constraint on the project for the past two weeks; dissertation timeline now compressed from "comfortable" to "achievable but tight" with submission on 7–8 August.
+
+**Run.** Reference reproduction at seed=42 plus multi-seed extension at seeds 7 and 13 on the newly provisioned NVIDIA L4 (mcrugcomp01.ex.ac.uk, 22 GB VRAM, RHEL 9.6, 128 cores, 376 GB RAM, 117 TB NFS home). Nine runs total, three models × three seeds. Config held at α=0.5, K=3, T=6, NUM_SHOTS=3, NUM_SERVER_QUERIES=100, EVAL_SIZE=100, ORDER_STRATEGY=original. Ollama installed userspace under `~/.local` (system `/opt/miniforge` is read-only and `/usr` requires sudo), models pulled to NFS home, tmux for session persistence across SSH disconnects. Workflow: edit on Mac → push to GitHub → `git pull` on server → run in named tmux sessions → scp results back.
+
+**Decision.** Move all subsequent experiments to mcrugcomp01. The Windows vGPU is unusable for sweeps. The L4 delivers 0.30 s/call for mistral, 0.26 s/call for phi3, and 0.63 s/call for llama3 in steady state after model load, which is between 8× and 19× faster than the vGPU depending on model. A full reference run that took 2h27m on Windows takes 9 to 19 minutes on the L4 depending on model. The 22 GB VRAM is enough headroom to hold any one of the three models plus generous context, and the dedicated nature of the card (no time-slicing) removes the source of the Windows latency.
+
+**Reproducibility check.** Same config as the MacBook reference runs, seed=42, to confirm the new compute environment produces consistent numbers before launching anything new.
+
+| Model    | Metric      | MacBook | L4    | Δ      | Within Wilson 95% CI? |
+|----------|-------------|---------|-------|--------|------------------------|
+| mistral  | Zero-shot   | 79%     | 78%   | -1pp   | yes                    |
+| mistral  | Local-only  | 77%     | 77%   | 0      | yes                    |
+| mistral  | Fed-ICL R6  | 80%     | 80%   | 0      | yes                    |
+| mistral  | Held-out    | 75%     | 76%   | +1pp   | yes                    |
+| llama3   | Zero-shot   | 74%     | 75%   | +1pp   | yes                    |
+| llama3   | Local-only  | 74%     | 75%   | +1pp   | yes                    |
+| llama3   | Fed-ICL R6  | 81%     | 81%   | 0      | yes                    |
+| llama3   | Held-out    | 81%     | 79%   | -2pp   | yes                    |
+| phi3     | Zero-shot   | 71%     | 63%   | -8pp   | borderline             |
+| phi3     | Local-only  | 73%     | 68%   | -5pp   | yes                    |
+| phi3     | Fed-ICL R6  | 75%     | 69%   | -6pp   | yes                    |
+| phi3     | Held-out    | 76%     | 68%   | -8pp   | borderline             |
+
+Mistral and llama3 reproduce within sampling noise (Wilson 95% CI ≈ ±8pp at n=100). Phi3 shows a systematic 5–8pp downward shift on every metric, in the same direction. Verified `ollama show phi3` on both machines: same model digest, same parameter count (3.8B), same quantisation (Q4_0). The model file is identical.
+
+**Initial hypothesis for phi3 shift.** Inference-backend numerical drift. Apple Silicon's Metal backend and NVIDIA CUDA execute the same matrix operations with different floating-point rounding orders. With `TEMPERATURE = 0.0` decoding selects the argmax token, which is robust when logit margins are wide but unstable when two tokens have near-identical logits. Smaller models produce lower-margin predictions on average, so phi3 (3.8B) would be expected to flip on more borderline cases than mistral (7B) or llama3 (8B). This is consistent with reports in the HuggingFace community on cross-backend reproducibility, e.g. open issues on `transformers` repository regarding CUDA vs CPU argmax stability.
+
+The hypothesis predicts a roughly stable bias for any given backend (each backend's argmax tie-breaking is itself deterministic). To test it, I ran two more seeds on phi3 to see whether the L4 numbers cluster tightly around 69% or spread.
+
+**Pattern: multi-seed extension reveals the larger problem.** Seeds 7 and 13 at the same configuration, all three models. Nine cells total.
+
+| Model   | Seed | Zero-shot | Local-only | Fed-ICL R6 | Held-out | Federation gain |
+|---------|------|-----------|------------|------------|----------|-----------------|
+| phi3    | 42   | 63%       | 68%        | 69%        | 68%      | +1pp            |
+| phi3    | 7    | 61%       | 66%        | 78%        | 70%      | +12pp           |
+| phi3    | 13   | 63%       | 69%        | 66%        | 68%      | -3pp            |
+| mistral | 42   | 78%       | 77%        | 80%        | 76%      | +3pp            |
+| mistral | 7    | 72%       | 76%        | 81%        | 77%      | +5pp            |
+| mistral | 13   | 79%       | 81%        | 78%        | 79%      | -3pp            |
+| llama3  | 42   | 75%       | 75%        | 81%        | 79%      | +6pp            |
+| llama3  | 7    | 77%       | 67%        | 80%        | 82%      | +13pp           |
+| llama3  | 13   | 82%       | 80%        | 79%        | 83%      | -1pp            |
+
+Federation gain ranges from -3pp to +13pp across seeds at fixed configuration, a 16pp swing that the original three-cell reference design could not detect. Within each model the seed dominates: seed=7 produces large positive gain (+12, +5, +13), seed=42 produces modest gain (+1, +3, +6), seed=13 produces negative or near-zero gain (-3, -3, -1) across all three models. The directional consistency across models tells against a per-model artefact and points at the partition draw as the primary mechanism.
+
+Cross-seed standard deviations (n=3, noisy estimate):
+
+| Model   | Zero-shot σ | Local-only σ | Fed-ICL R6 σ | Held-out σ | Federation gain σ |
+|---------|-------------|--------------|--------------|------------|--------------------|
+| phi3    | 1pp         | 2pp          | 6pp          | 1pp        | 8pp                |
+| mistral | 4pp         | 3pp          | 2pp          | 2pp        | 4pp                |
+| llama3  | 4pp         | 7pp          | 1pp          | 2pp        | 7pp                |
+
+Three observations from this table that need flagging:
+
+1. Baselines (zero-shot, local-only, held-out) have low variance, σ between 1 and 7pp.
+2. Fed-ICL R6 variance is comparable to or lower than the baselines (σ between 1 and 6pp), suggesting Fed-ICL converges toward a similar absolute accuracy regardless of partition.
+3. The federation gain (Fed-ICL R6 minus Local-only) has higher variance than either of its constituent metrics. This is because the local-only baseline itself swings strongly with the partition (Client 0's draw), and gain is a difference of two random quantities that are partially anti-correlated.
+
+**Mechanism for seed=13.** Client 0's Dirichlet draw is heavily concentrated under seed=13: world=40, business=59, sports=1, science=1, totalling 101 examples. Because the AG News test set is approximately label-balanced (≈25 per class at n=100), a client with only two-class exposure should be a poor classifier in expectation. But the held-out test happens to include enough world and business stories that Client 0's local-only baseline runs unusually high under seed=13 (68%, 81%, 80% across phi3, mistral, llama3). Federation averages Client 0's locally-strong predictions with Client 1 and Client 2's noisier votes, and the mixing actively dilutes the signal: -3, -3, -1pp.
+
+This is not a quirk. It is a real failure mode of Fed-ICL: when the random partition produces a single client whose local data happens to be predictive of the test distribution, collaboration hurts. It generalises the Anelli et al. 2024 observation on "winning" client partitions in federated recommendation to the in-context-learning setting.
+
+**Implications for H3 (capability-floor hypothesis).** The original H3 framed federation gain as scaling with model capability: stronger models would extract more from the same shared context. The single-seed reference data from May appeared to support this (gain +2 phi3, +3 mistral, +7 llama3). The multi-seed data does not support it. Within each model, the partition seed produces gains ranging from clearly negative to strongly positive. The mean gain across seeds is +3 ± 8 phi3, +2 ± 4 mistral, +6 ± 7 llama3, but with n=3 the standard deviations overlap heavily.
+
+What the data does support is a partition-structure claim: federation hurts when the partition produces a client whose local data is a good summary of the test set, helps when no such client exists. This is closer in spirit to McMahan et al. 2017's framing of client heterogeneity and to Zhao et al. 2018 on the impact of non-IID data on federated averaging.
+
+Action: reframe H3 from a model-capability claim to a partition-structure claim for the next supervision meeting. Original framing should be preserved in the dissertation as a documented hypothesis that the data overturned, since reporting an overturned hypothesis is itself a finding.
+
+**Implications for the phi3 backend hypothesis.** The 5–8pp MacBook-vs-L4 gap at seed=42 cannot be cleanly attributed to backend drift any more, because within-L4 variance across three seeds is comparable in magnitude (phi3 Fed-ICL R6 range 69%–78% on L4 alone, 9pp). Backend drift may still be a contributing factor, but it is no longer separable from partition variance using just one seed per backend. The defensible position is that single-seed point estimates on either machine are too noisy to support backend claims. The seed-variance finding subsumes the backend question. This is worth flagging in the dissertation's methodology section as a real limitation of single-seed federated learning experiments more broadly.
+
+**Implications for the pool-size sweep (Dr. Jin's directive from 2026-05-29).** A single-seed pool-size sweep would be uninterpretable. Acceptable design floor is 3 seeds per condition, with 5 strongly preferred. At observed L4 latencies, a 5-seed sweep across pool sizes {10, 50, 100} on three models = 45 runs, total wall-clock ≈ 7.5 hours, feasible inside a single overnight session. This is the next experimental commitment.
+
+**Implications for the heterogeneity sweep.** The α parameter directly controls the partition concentration that the multi-seed data has now shown to be the dominant variable. The original plan was to fix pool size first then sweep α at that pool. Given the new finding, an argument can be made for prioritising the α sweep over the pool-size sweep, since α is now the central variable. This is a question for Dr. Jin at the next supervision rather than a unilateral decision; the pool-size sweep is still what was asked for and will be executed first.
+
+**Code state.**
+- `MODEL_NAME` now reads `FED_ICL_MODEL` env var (default mistral), `SEED` reads `FED_ICL_SEED` env var (default 42). Confirmed both via env-var override producing distinct partition summaries and distinct results filenames.
+- `results_*.json` overwrite bug already fixed in `main.py` line 197: filename interpolates `MODEL_NAME`, `DIRICHLET_ALPHA`, `NUM_CLIENTS`, `NUM_ROUNDS`, `SEED`, `ORDER_STRATEGY`. README workaround ("rename results.json between runs") is now stale and should be removed in the next pass.
+- `select_examples` and `order_examples` applied consistently across Fed-ICL rounds, local-only baseline, and held-out evaluation (confirmed by grep across `main.py` and `federation.py`). The ORDER_STRATEGY confound risk flagged earlier is now closed.
+- `CLIENT_POOL_SIZE` parameter not yet exposed through `config.py`. Currently the per-client pool is implicit at 250 (= 350 - NUM_SERVER_QUERIES). Needs parametrising before the pool-size sweep can launch. Three-file change: add the parameter to `config.py`, derive `RAW_DATA` total from it in `data.py`, add it to results filename in `main.py`.
+
+**Pending.**
+- `CLIENT_POOL_SIZE` parameter implementation (next code commit).
+- Two extra seeds (3, 99) running now to bring all nine conditions to 5 seeds; results expected within ~75 minutes.
+- Reframed H3 to discuss at next supervision (originally 18 June, rescheduled to 24 June).
+- Pool-size sweep to launch once `CLIENT_POOL_SIZE` is wired through and the 5-seed extension confirms the three-seed picture holds.
+- Update repository README to remove the stale `results.json` rename workaround.
