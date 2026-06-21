@@ -8,6 +8,7 @@ import os
 # LLM Settings
 MODEL_NAME = os.environ.get("FED_ICL_MODEL", "mistral")           # Ollama model name (must be pulled first)
 OLLAMA_HOST = os.environ.get("FED_ICL_HOST", "http://localhost:11434")
+DATASET = os.environ.get("FED_ICL_DATASET", "agnews")
 TEMPERATURE = 0.0               # 0 = deterministic outputs (reproducible)
 MAX_TOKENS = 10                 # Short - we only need a category label
 

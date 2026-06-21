@@ -6,7 +6,7 @@ import numpy as np
 from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
-    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE
+    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, DATASET,
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -155,11 +155,11 @@ def print_summary(results: dict):
         print(f"\n  Held-out accuracy: {results['eval_accuracy']:.1%}")
     if "eval_accuracy" in results and results.get("baselines"):
         local_only = results["baselines"].get("local_only")
-    if local_only is not None:
-        fed_final = results["rounds"][-1]["accuracy"]
-        fed_gain  = (fed_final - local_only) * 100
-        print(f"  Federation gain over local-only: {fed_gain:+.1f}pp "
-              f"(local-only {local_only:.1%} → Fed-ICL R{NUM_ROUNDS} {fed_final:.1%})")
+        if local_only is not None:
+            fed_final = results["rounds"][-1]["accuracy"]
+            fed_gain  = (fed_final - local_only) * 100
+            print(f"  Federation gain over local-only: {fed_gain:+.1f}pp "
+                  f"(local-only {local_only:.1%} → Fed-ICL R{NUM_ROUNDS} {fed_final:.1%})")
     if results.get("parse_stats"):
         ps = results["parse_stats"]
         print(f"\n  Parse fallback rate: {ps['fallback_rate']:.1%} "
@@ -171,7 +171,7 @@ def print_summary(results: dict):
 
 def main():
     print("\n╔══════════════════════════════════════════════════════╗")
-    print("  ║  Fed-ICL Replication  —  AG News Topic Classification║")
+    print("  ║  Fed-ICL Replication  —  Topic Classification        ║")
     print("  ╚══════════════════════════════════════════════════════╝\n")
 
     if not check_ollama_ready():
@@ -190,9 +190,9 @@ def main():
     print_summary(results)
 
     out_path = (
-        f"results_{MODEL_NAME}"
+        f"results_{DATASET}_{MODEL_NAME}"
         f"_alpha{DIRICHLET_ALPHA}"
-        f"_K{NUM_SHOTS}"
+        f"_K{NUM_CLIENTS}"
         f"_T{NUM_ROUNDS}"
         f"_pool{CLIENT_POOL_SIZE}"
         f"_seed{SEED}"
