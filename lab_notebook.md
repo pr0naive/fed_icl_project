@@ -712,7 +712,7 @@ for r in data['parse_stats'].get('sample_unparseable', [])[:30]:
 
 | Model | Primary OOV label | Secondary | Hedging |
 |---|---|---|---|
-| llama3 (8B, 0.1% fallback) | None | — | Silent compliance |
+| llama3 (8B, 0.1% fallback) | None | - | Silent compliance |
 | mistral 7B (3.0%) | technology (73%) | politics (17%) | Explicit "(subcategory of X)" |
 | phi3 (3.8B, 2.4%) | politics (57%) | seven others (10% or less each) | None |
 
@@ -913,3 +913,78 @@ Action: reframe H3 from a model-capability claim to a partition-structure claim 
 - Reframed H3 to discuss at next supervision (originally 18 June, rescheduled to 24 June).
 - Pool-size sweep to launch once `CLIENT_POOL_SIZE` is wired through and the 5-seed extension confirms the three-seed picture holds.
 - Update repository README to remove the stale `results.json` rename workaround.
+
+
+### 2026-06-21 Five-seed extension and figure set
+
+**Run.** Two new seeds (3, 99) per model under the same configuration as the
+2026-06-16 multi-seed runs. Six runs total, queued in parallel through detached
+tmux sessions on mcrugcomp01 and served by Ollama with NUM_PARALLEL=1. Total
+wall clock ~75 minutes. Individual runs took longer than the sequential
+2026-06-16 timings (mistral seed=3: 36 min vs 9 min reference) because concurrent
+requests interleaved through the single-stream Ollama queue. Total throughput
+was higher, individual latencies were not.
+
+**Result.** Full 5-seed matrix now complete (seeds 3, 7, 13, 42, 99 for each of
+phi3, mistral, llama3). Mean and standard deviation across seeds:
+
+| Model   | Fed-ICL R6 m ± s | Local-only m ± s | Federation gain m ± s |
+|---------|------------------|------------------|------------------------|
+| phi3    | 68.8 ± 6.2       | 65.8 ± 4.5       | +3.0 ± 8.7             |
+| mistral | 79.6 ± 3.4       | 77.4 ± 2.7       | +2.2 ± 5.8             |
+| llama3  | 80.8 ± 1.9       | 74.8 ± 5.5       | +6.0 ± 6.5             |
+
+**Pattern strengthened.** Within-seed cross-model directional agreement now holds
+for all 15 cells. Seeds 7 and 99 produce strong positive gains across all three
+models (+5pp to +13pp). Seeds 3 and 13 produce neutral or negative gains
+(-7pp to 0pp). Seed 42 sits between. The direction of effect is determined
+by the partition seed, not by the model.
+
+**Mechanism for the negative cases.** The seed=13 mechanism documented on
+2026-06-16 (Client 0 receiving a heavily concentrated draw that aligns with
+the test distribution) generalises. Seed=3 shows a different but related
+structure: Client 0 has 97% of its examples in world+sports, Client 1 has 86%
+in business+science, Client 2 has 94% in world+business. Each client is well
+specialised to two classes, but averaging across the three clients dilutes
+each specialisation. Federation hurts here not because one client is
+unusually strong, but because the clients are unusually disjoint and the
+collaboration step does not compose their specialisations cleanly.
+
+**Negative cases overall.** Federation hurts or fails to help in 4 of 15
+conditions (27%): mistral and phi3 at both seed=3 and seed=13. Llama3 is
+more robust, its worst case is -1pp at seed=13, but it still drops to 0pp
+at seed=3, so capability alone does not guarantee federation gain.
+
+**H3 read.** Mean per-model gains preserve the original capability ordering
+(phi3 +3.0, mistral +2.2, llama3 +6.0), but standard deviations of 6 to 9pp
+at n=5 mean the gains are not separable. Original H3 is not refuted, but n=5
+is insufficient to support it either. The partition-structure framing
+introduced on 2026-06-16 remains the more defensible claim.
+
+**Figures.** Four figures generated and committed under
+`figures/multi_seed_validation/`. The plotting script is at
+`scripts/plot_multi_seed.py` and regenerates all four when run from a
+directory containing the result JSON files.
+
+![Federation gain by model and seed](figures/multi_seed_validation/01_gain_heatmap.png)
+
+- `01_gain_heatmap.png` - federation gain by (model, seed); the
+  cross-model agreement is visible as vertical colour banding.
+- `02_gain_distribution.png` - per-model gain distribution with mean ± std.
+- `03_round_trajectories.png` - round-by-round accuracy per condition,
+  coloured by seed so the same seed is the same colour across model panels.
+- `04_fed_vs_local_scatter.png` - Fed-ICL R6 against local-only baseline,
+  with the no-gain diagonal and the regions where federation helps or hurts.
+
+**Implications for the protocol.** Single-seed runs are not defensible for
+this project. The minimum acceptable design for all future sweeps is 3 seeds
+per condition, with 5 preferred. For the pool-size sweep, this means
+3 pool sizes × 3 models × 3 seeds = 27 runs (≈4-5 hours wall clock on the L4),
+or 45 runs if extended to 5 seeds.
+
+**Pending.**
+- `CLIENT_POOL_SIZE` parameter implementation (next code commit).
+- Pool-size sweep design to discuss with Dr. Jin on 2026-06-24.
+- Decision required: prioritise pool-size sweep (Dr. Jin's original directive)
+  or heterogeneity sweep (more theoretically central given the partition-
+  structure framing).
