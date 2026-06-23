@@ -18,3 +18,6 @@ results_*.json
 !results_llama3_alpha0.5_K3_T6_seed42_order-original.json
 # HuggingFace cache (if used locally)
 .cache/
+!results_mistral_alpha0.5_K3_T6_seed42_order-original.json
+!results_phi3_alpha0.5_K3_T6_seed42_order-original.json
+logs/
