@@ -79,7 +79,7 @@ class FedICLClient:
     def predict_server_queries(self, server_queries: list, global_context: list) -> list:
         from llm import predict_with_icl
         if self.relabelled_data:
-            example_pool = self.local_data + self.relabelled_data
+            example_pool = self.relabelled_data
         else:
             example_pool = self.local_data
 
