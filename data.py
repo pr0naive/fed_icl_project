@@ -16,9 +16,10 @@ _AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
 
 
 
-"""Load AG News from HuggingFace and subsample deterministically.
-AG News has 120k training examples, far more than ICL needs.
-We take a random subset for comparable scale to the synthetic data."""
+"""Draw a uniform random sample from the full canonical AG News training
+split (120,000 examples), which is the sampling frame for client pools and
+server queries. Evaluation is drawn separately from the canonical test
+split (7,600 examples); see _load_ag_news_test."""
 def _load_ag_news(num_examples, seed):
     ds = load_dataset("fancyzhx/ag_news", split="train")
     rng = np.random.default_rng(seed)
@@ -114,6 +115,8 @@ def prepare_experiment():
     print("DATA DISTRIBUTION SUMMARY")
     print("=" * 60)
     print(f"  Total train:    {len(RAW_DATA)}")
+    print(f"  Sampling frame:    train split n=120000, test split n=7600 (canonical)")
+    print(f"  Drawn this run:    pool={len(client_pool)}, queries={len(server_queries)}, eval={len(eval_set)}")
     print(f"  Label space:       {LABEL_SPACE}")
     print(f"  Evaluation set (test):    {len(eval_set)} drawn from ag_news split='test')")
     print(f"  Server queries:    {len(server_queries)}")
