@@ -31,7 +31,10 @@ ORDER_STRATEGY = os.environ.get("FED_ICL_ORDER", "original")     # Options: "ori
 NUM_SERVER_QUERIES = int(os.environ.get("FED_ICL_Q", 100))         # Queries forming the global context C
 CLIENT_POOL_SIZE = int(os.environ.get("FED_ICL_POOL_SIZE", 250))
 # Evaluation 
-EVAL_SIZE = int(os.environ.get("FED_ICL_EVAL", 100))                 # Held-out test examples (never seen during federation)
+# Evaluation
+EVAL_SIZE = int(os.environ.get("FED_ICL_EVAL", 1000))            # Held-out test examples (never seen during federation)
+EVAL_SEED = int(os.environ.get("FED_ICL_EVAL_SEED", 12345))      # FIXED, decoupled from partition SEED.
+                                                                 # The eval set must be identical across partition seeds, otherwise partition variance and evaluation-sampling noise are conflated.
 
 # Random Seed 
 SEED = int(os.environ.get("FED_ICL_SEED", 42))

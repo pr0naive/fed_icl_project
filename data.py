@@ -6,7 +6,7 @@ Fed-ICL Replication — Data Module (v2 - Harder Task)
 import numpy as np
 from datasets import load_dataset
 from numpy.random import seed
-from config import SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE
+from config import (SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, EVAL_SEED)
 
 np.random.seed(SEED)
 
@@ -28,12 +28,28 @@ for i in indices]
                     
 RAW_DATA = _load_ag_news(num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
-def _load_ag_news_test(num_examples, seed):
+def _load_ag_news_test(num_examples, seed=EVAL_SEED):
+    """Deterministic, class-balanced eval sample from the AG News TEST split.
+
+    Uses EVAL_SEED (fixed) rather than the partition SEED, so the eval set is
+    IDENTICAL across partition seeds. Class-balanced sampling makes per-class
+    accuracy comparable across runs and removes sampling skew as a confound.
+    """
     ds = load_dataset("fancyzhx/ag_news", split="test")
-    rng = np.random.default_rng(seed + 1)
-    indices = rng.choice(len(ds), size=num_examples, replace=False)
-    return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
-            for i in indices]
+    rng = np.random.default_rng(seed)
+    labels = np.array(ds["label"])
+    num_classes = len(LABEL_SPACE)
+    per_class = num_examples // num_classes
+    remainder = num_examples - per_class * num_classes
+
+    indices = []
+    for c in range(num_classes):
+        cls_idx = np.where(labels == c)[0]
+        take = per_class + (1 if c < remainder else 0)
+        chosen = rng.choice(cls_idx, size=take, replace=False)
+        indices.extend(int(i) for i in chosen)
+    rng.shuffle(indices)
+    return [(ds[i]["text"], _AG_NEWS_LABEL_MAP[ds[i]["label"]]) for i in indices]
 
 def get_label_id(label: str) -> int:
     return LABEL_SPACE.index(label)
@@ -87,8 +103,8 @@ def prepare_experiment():
     data = RAW_DATA.copy()
     np.random.shuffle(data)
 
-# eval_set now comes from AG News TEST split, not a slice of train.
-    eval_set = _load_ag_news_test(EVAL_SIZE, SEED)
+# eval_set: AG News TEST split, fixed EVAL_SEED, class-balanced.
+    eval_set = _load_ag_news_test(EVAL_SIZE, EVAL_SEED)
     server_queries = data[:NUM_SERVER_QUERIES]
     client_pool = data[NUM_SERVER_QUERIES:]
 
