@@ -164,12 +164,20 @@ class FedICLServer:
             (text, np.random.choice(LABEL_SPACE))
             for text, _ in server_queries
         ]
+        # Tie-breaking for majority vote (Eq. 5 argmax is not unique on
+        # ties; the paper does not specify a rule). Seeded RNG, independent
+        # stream from partition/init randomness. Tie counts are recorded so
+        # the tie rate can be reported alongside accuracy.
+        self._tie_rng = np.random.default_rng(SEED + 1000)
+        self.tie_count = 0
+        self.ties_by_round = []
 
     def get_global_context(self) -> list:
         return self.global_context.copy()
 
     def aggregate_predictions(self, all_client_predictions: list):
         new_context = []
+        round_ties = 0
         for q_idx in range(len(self.queries)):
             query_text = self.queries[q_idx][0]
             votes = []
@@ -181,13 +189,25 @@ class FedICLServer:
 
             if votes:
                 vote_counts = Counter(votes)
-                aggregated_label = vote_counts.most_common(1)[0][0]
+                top_count = max(vote_counts.values())
+                tied = sorted(l for l, c in vote_counts.items()
+                              if c == top_count)
+                if len(tied) == 1:
+                    aggregated_label = tied[0]
+                else:
+                    # Uniform random among the argmax set, seeded for reproducibility. 
+                    # Counter.most_common(1) broke ties by insertion order, which systematically favoured client 0 on 1-1-1 splits. tied is sorted first so the draw is deterministic given the RNG state.
+                    aggregated_label = str(self._tie_rng.choice(tied))
+                    round_ties += 1
             else:
+                # All votes unparseable: retain the previous round's label.
                 aggregated_label = self.global_context[q_idx][1]
 
             new_context.append((query_text, aggregated_label))
 
         self.global_context = new_context
+        self.tie_count += round_ties
+        self.ties_by_round.append(round_ties)
 
     def evaluate_context(self) -> dict:
         correct = 0
