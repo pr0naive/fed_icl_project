@@ -11,6 +11,13 @@ OLLAMA_HOST = os.environ.get("FED_ICL_HOST", "http://localhost:11434")
 TEMPERATURE = 0.0               # 0 = deterministic outputs (reproducible)
 MAX_TOKENS = 10                 # Short - we only need a category label
 
+# Federation variant (Wang et al., Appendix C.3)
+FED_VARIANT = os.environ.get("FED_ICL_VARIANT", "fed_icl")
+# Options:
+#   "fed_icl"       Step 2 conditions on D^i AND D_k^i (local + relabelled).
+#   "fed_icl_free"  Step 2 conditions on D_k^i only (the label-free variant);
+#                   falls back to local data if the relabelled pool is empty.
+
 # Federation Settings
 NUM_CLIENTS = int(os.environ.get("FED_ICL_CLIENTS", 3))                 # K: number of simulated clients
 NUM_ROUNDS = int(os.environ.get("FED_ICL_ROUNDS", 6))                  # T: number of federation rounds

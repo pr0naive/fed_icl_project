@@ -6,7 +6,7 @@ Implements Fed-ICL (Wang et al., ICML 2025) with support for example ordering ex
 
 import numpy as np
 from collections import Counter
-from config import NUM_SHOTS, SELECTION_STRATEGY, ORDER_STRATEGY, SEED
+from config import NUM_SHOTS, SELECTION_STRATEGY, ORDER_STRATEGY, SEED, FED_VARIANT
 
 np.random.seed(SEED)
 
@@ -140,7 +140,14 @@ class FedICLClient:
     def predict_server_queries(self, server_queries: list, global_context: list) -> list:
         from llm import predict_with_icl
         if self.relabelled_data:
-            example_pool = self.local_data + self.relabelled_data
+            if FED_VARIANT == "fed_icl_free":
+                # Fed-ICL-Free (Wang et al., App. C.3): condition on the
+                # relabelled pool D_k^i only; ground-truth labels unused
+                # at this step.
+                example_pool = self.relabelled_data
+            else:
+                # Full Fed-ICL: condition on both D^i and D_k^i.
+                example_pool = self.local_data + self.relabelled_data
         else:
             example_pool = self.local_data
 

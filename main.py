@@ -6,7 +6,7 @@ import numpy as np
 from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
-    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE
+    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, FED_VARIANT
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -191,6 +191,7 @@ def main():
 
     out_path = (
         f"results_{MODEL_NAME}"
+        f"_variant-{FED_VARIANT}"
         f"_alpha{DIRICHLET_ALPHA}"
         f"_K{NUM_CLIENTS}"
         f"_T{NUM_ROUNDS}"
@@ -199,6 +200,7 @@ def main():
         f"_order-{ORDER_STRATEGY}.json"
     )
     with open(out_path, "w") as f:
+        results["variant"] = FED_VARIANT
         json.dump(results, f, indent=2)
     print(f"\nResults saved to {out_path}")
 
