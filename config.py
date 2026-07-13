@@ -21,7 +21,12 @@ DIRICHLET_ALPHA = float(os.environ.get("FED_ICL_ALPHA", 0.5))           # Contro
 
 # ICL Settings
 NUM_SHOTS = int(os.environ.get("FED_ICL_K", 3))                   # Number of in-context examples per prompt
-SELECTION_STRATEGY = os.environ.get("FED_ICL_SEL", "random")   # Options: "random", "similarity"
+SELECTION_STRATEGY = os.environ.get("FED_ICL_SEL", "similarity_embedding")
+# Options:
+#   "similarity_embedding"  kNN in paraphrase-MiniLM-L6-v2 embedding space.
+#                           Paper-faithful (Wang et al., Appendix C.1) and the DEFAULT. Requires sentence-transformers.
+#   "similarity"            lexical word-overlap. Documented deviation, kept as an ablation arm, NOT the paper's method.
+#   "random"                no filtering. Corresponds to the paper's "without filtering" ablation (their Figure 8).
 
 # Ordering Settings (for dissertation experiments)
 ORDER_STRATEGY = os.environ.get("FED_ICL_ORDER", "original")     # Options: "original", "similarity_ascending", "similarity_descending", "label_grouped", "label_alternating", "random_shuffle"

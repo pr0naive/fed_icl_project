@@ -11,6 +11,48 @@ from config import NUM_SHOTS, SELECTION_STRATEGY, ORDER_STRATEGY, SEED
 np.random.seed(SEED)
 
 
+""" Embedding-based similarity (paper-faithful selection).
+ Wang et al. perform kNN retrieval in sentence-embedding space with paraphrase-MiniLM-L6-v2 (Appendix C.1, Algorithm 2), applied both to the round-1 local-dataset prefilter and to context selection at lines 5 and 7 of Algorithm 1. 
+ Implementing per-query kNN selection here makes the separate round-1 prefilter redundant for outputs: a query's top-n neighbours in the full pool are, by construction, contained in the union-of-top-n filtered pool, so the selected context is identical. 
+ The prefilter in the paper is a cost optimisation, not a correctness step. """
+
+_EMBED_MODEL = None
+_EMB_CACHE = {}
+
+
+def _get_embedder():
+    global _EMBED_MODEL
+    if _EMBED_MODEL is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as e:
+            raise RuntimeError(
+                "SELECTION_STRATEGY='similarity_embedding' requires the "
+                "sentence-transformers package (paper's retriever, "
+                "paraphrase-MiniLM-L6-v2). Install with: "
+                "pip install sentence-transformers"
+            ) from e
+        _EMBED_MODEL = SentenceTransformer("paraphrase-MiniLM-L6-v2")
+    return _EMBED_MODEL
+
+
+def _embed(texts: list) -> np.ndarray:
+    """Embed texts with a module-level cache; rows align with input order.
+
+    Embeddings are L2-normalised at encode time, so a dot product between
+    two rows equals cosine similarity. The cache means each unique text
+    (pool example, server query, eval query) is embedded exactly once per
+    process, keeping the retrieval cost negligible next to LLM calls.
+    """
+    missing = [t for t in texts if t not in _EMB_CACHE]
+    if missing:
+        model = _get_embedder()
+        vecs = model.encode(missing, normalize_embeddings=True,
+                            show_progress_bar=False)
+        for t, v in zip(missing, vecs):
+            _EMB_CACHE[t] = v
+    return np.stack([_EMB_CACHE[t] for t in texts])
+
 class FedICLClient:
     def __init__(self, client_id: int, local_data: list, model: str = None):
         self.client_id = client_id
@@ -21,8 +63,25 @@ class FedICLClient:
     def select_examples(self, query_text: str, pool: list, n: int) -> list:
         if len(pool) <= n:
             return list(pool)
+        
+        if SELECTION_STRATEGY == "similarity_embedding":
+            """ Paper-faithful kNN (Wang et al., Algorithm 2): cosine
+             similarity in paraphrase-MiniLM-L6-v2 space. Vectors are
+             normalised, so dot product == cosine similarity."""
+            pool_vecs = _embed([text for text, _ in pool])
+            query_vec = _embed([query_text])[0]
+            scores = pool_vecs @ query_vec
+            top_indices = np.argsort(scores)[-n:]
+            selected = [pool[i] for i in top_indices]
+            # Shuffle so order_examples is the sole controller of order;
+            # "original" ordering stays a true control.
+            np.random.shuffle(selected)
+            return selected
 
         if SELECTION_STRATEGY == "similarity":
+            """ Lexical word-overlap. Documented deviation kept as an ablation
+             arm; the paper's method is "similarity_embedding" above. """
+
             query_words = set(query_text.lower().split())
             scores = []
             for text, label in pool:
