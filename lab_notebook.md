@@ -1004,3 +1004,261 @@ Bug fixes on main: the output filename used `NUM_SHOTS` where it should have use
 Two branches created for the post-sweep work: `sci-tech-label-pilot` (the canonical Sci/Tech label experiment Dr. Jin and I agreed to revisit on 2026-05-29) and `harder-dataset-experiment` (DBpedia loader added, switchable via `FED_ICL_DATASET` env var). Neither tested yet, awaiting sweep completion.
 
 **Pending.** Sweep completion. Pool-size results pull and plot extension. Pilot runs on the two branches. Email to Dr. Jin Tuesday evening with one-paragraph preview before the 2026-06-24 supervision.
+
+### 2026-06-22 Pool-sweep analysis, methodology audit, Fed-ICL vs Fed-ICL-Free
+
+**Sweep results.** The 36-run pool-size sweep launched on 21 June completed overnight. Combined with the existing 15-cell multi-seed validation at pool=250, the full dataset is now 52 conditions: 3 models × 5 pool sizes × 3-5 seeds at α=0.5, K=3, T=6, n=100, order=original. The numbers below are R6_gain (round 6 federation accuracy on server queries minus local-only baseline accuracy on eval_set) since that was the metric used during the sweep design. The validity of that subtraction is revisited later in this entry.
+
+Per-model × per-pool mean ± std across seeds:
+
+| Model | pool=30 | pool=60 | pool=120 | pool=250 | pool=500 |
+|---|---|---|---|---|---|
+| phi3 | -1.7 ± 9.3 | -2.0 ± 1.7 | +0.3 ± 2.5 | +3.0 ± 8.7 | -0.3 ± 11.6 |
+| mistral | +1.7 ± 5.0 | +1.3 ± 4.9 | +0.0 ± 1.0 | +2.2 ± 5.8 | +0.7 ± 7.4 |
+| llama3 | +2.0 ± 7.8 | -0.3 ± 3.8 | +6.7 ± 3.5 | +6.0 ± 6.5 | +3.3 ± 12.0 |
+
+**Pool-size verdict.** Only one cell across the entire 52-condition matrix clears the mean - std > 0 bar: llama3 pool=120 at +6.7 ± 3.5pp, lower bound +3.2pp. Every other model × pool cell includes zero or is negative at one standard deviation below the mean. Mistral is genuinely flat (range across pool sizes is 2.2pp). Phi3 is noise-limited with std bands of ±9 to ±12pp at the pool=30 and pool=500 endpoints. Llama3 shows a plausible sweet spot at pool=120-250 but only pool=120 is reliable within seeds.
+
+**Rank consistency is weak.** Kendall's W on pool-size ranks across seeds is 0.044 for mistral and 0.178 for llama3. Phi3 has too few common seeds across all pools to compute W. Even at the cells where mean gains differ visibly between pool sizes, seeds do not agree on which pool is best. This means the headline "llama3 pool=120 is best" is an amplitude effect at the aggregate mean, not a rank effect consistent across individual seeds.
+
+**44% negative-gain rate.** 23 of 52 conditions show R6_gain < 0 (federation hurt). Per model: phi3 9/18 (50%), mistral 8/17 (47%), llama3 6/17 (35%). Partition seed dominates variance. The largest within-cell swing is llama3 pool=500 with seed=7 at +15pp and seed=42 at -9pp, a 24pp range at fixed condition. pool=500 has the highest std across all three models, counter to the naive expectation that more data should stabilise the gain. Seeds 7 and 99 consistently produce strong positive gains; seeds 3 and 13 produce neutral or negative gains across the matrix.
+
+**R6 vs HO metric mismatch.** While extending analyse.py to compute per-pool aggregates, I noticed that R6 (the accuracy in `rounds[6].accuracy`) is measured on server_queries (the in-loop test set that the federation is iteratively trying to label). local_only is measured on eval_set (the held-out 100 examples never seen during federation). Subtracting them gives "in-loop accuracy minus held-out baseline," which mixes test sets and is not a valid generalisation comparison. The valid generalisation metric is eval_accuracy (HO, the held-out evaluation using the final global context as the ICL pool) minus local_only, both on eval_set. R6_gain remains useful as a secondary process metric showing iterative convergence; it should not be used as the primary outcome.
+
+Recomputed with HO_gain as primary, the llama3 pool=120 finding strengthens: mean +5.0 ± 1.0pp, lower bound +4.0pp. Mistral pool=120 mean shifts from +1.3 to -0.7pp. The 44% negative-gain rate is preserved (23/52, different cells) under HO_gain. Eleven cells flip sign between the two metrics. The dissertation will report HO_gain as primary and R6_gain alongside as evidence the iterative loop is the mechanism producing the held-out gain.
+
+**Local-only and gain anti-correlate.** Per-model Pearson r between local_only accuracy and R6_gain: phi3 -0.79, mistral -0.52, llama3 -0.88. Two non-exclusive mechanisms:
+
+The ceiling-effect interpretation: R6 saturates near the model's max achievable accuracy on this task, so cells with low local_only have more headroom for gain. Llama3 mean R6 is 79.0% with max 84.0% (headroom 5pp), which fits the ceiling story.
+
+The partition-rescue interpretation: federation helps most when client 0's local partition is weak, because the global context provides information that client 0's own examples don't. Phi3 has mean R6 around 68% with max 76% (headroom 11pp), so the ceiling story is less plausible; partition-rescue is the better fit.
+
+Both mechanisms are real and inseparable at this n. The dissertation needs to flag this correlation as a structural confound when reporting federation gain: clients that already perform well have less room to benefit, and the gain metric is partly capturing that.
+
+**Fed-ICL vs Fed-ICL-Free.** While re-reading Wang et al. (2025) to verify the algorithm before writing the methods chapter, I noticed §5 distinguishes two variants. Main Fed-ICL uses `D_i ∪ D_i^k` as the prediction pool (concatenation of the client's original labelled data and its relabelled data). Fed-ICL-Free uses `D_i^k` only (relabelled data, when original labels are unavailable). Algorithm 1 line 7 confirms: `y^i_{k+1,m} ∼ LM_i(·|D_i, D_i^k, x_m)` for main Fed-ICL.
+
+Current `federation.py` has `example_pool = self.local_data + self.relabelled_data`, which is `D_i + D_i^k`. That is main Fed-ICL, not Fed-ICL-Free.
+
+The proposal (Proposal_750080426.pdf, submitted 29 May 2026) says Fed-ICL-Free is the variant adopted, in two places. §2.4: "Fed-ICL-Free is the variant adopted in the proposed project because it matches the constraints of a local replication." Appendix A.3: "federation.py (FedICLClient and FedICLServer implementing Fed-ICL-Free with six ordering strategies)."
+
+The codebase implements main Fed-ICL. The proposal claims Fed-ICL-Free. All 52 result files were produced under main Fed-ICL. This is a code-proposal mismatch, not a reanalysis issue: the data is valid measurements of a different algorithm than the proposal documented.
+
+**Path options.** Three paths to discuss with Dr. Jin on Wednesday. Path A: reframe the dissertation as Fed-ICL. Zero reruns, but loses the privacy-preserving framing §2.4 motivates. Path B: switch the code to Fed-ICL-Free and rerun all 52. Proposal-aligned, ~5-7 evenings of compute. Path C: compare both variants. Most interesting research direction (no published comparison under data heterogeneity), highest scope, biggest commitment. Decision is Dr. Jin's, not mine.
+
+**Branch created.** Branch `fed-icl-free` on GitHub with the one-line change in federation.py: `example_pool = self.relabelled_data` (with `self.local_data` as the round-1 fallback that never triggers in practice because relabel_local_data is called before predict_server_queries in every round). Verified the rest of the algorithm is variant-agnostic: selection, ordering, server aggregation (majority vote per Wang et al. §5), and held-out evaluation all unchanged.
+
+**Repo restructure on the server.** Moved 55 result JSONs out of `~/fed_icl_project/` and into `~/fed_icl_results/fed_icl/`. Created `~/fed_icl_results/fed_icl_free/` for the coming reruns. Restored six allow-listed reference JSONs to the repo via `git checkout HEAD --` so the proposal's preliminary results remain visible on GitHub. Updated .gitignore to add the mistral and phi3 reference files to the allow-list (they were already tracked but missing from the explicit allow-list rules) and to ignore `logs/`.
+
+**SSH authentication switched.** GitHub stopped accepting password authentication for git operations several years ago; the server was still configured with HTTPS+password. Generated an ed25519 SSH key on the server, added it to GitHub, switched the remote URL from `https://github.com/pr0naive/fed_icl_project` to `git@github.com:pr0naive/fed_icl_project`. Pushes from the server now work without password prompts.
+
+**Pending.** Run a Fed-ICL-Free pool sweep tonight to bring something to Wednesday. Email Dr. Jin Tuesday evening with one-paragraph preview. Build paired comparison once Fed-ICL-Free data exists.
+
+---
+
+### 2026-06-23 Fed-ICL-Free pool sweep, paired comparison with Fed-ICL
+
+**Server access resolved.** The mcrugcomp01 SSH timeouts on 21 June were a network issue, not a server issue. Off-campus wifi cannot reach internal Exeter hosts; GlobalProtect VPN is required. Once connected, SSH worked normally.
+
+**GPU contention.** Initial check at 17:18 showed the L4 at 100% utilisation with 15.3GB VRAM in use, well above what should be there at idle. nvidia-smi process list showed seven Jupyter ipykernel processes owned by user hj452, running from a conda env named "dissertation". Elapsed times ranged from 19 minutes to 8 hours, the most recent kernel having just started. Active work, not a stale session. Emailed hj452 explaining I needed L4 time for my own dissertation sweep and asking whether they could coordinate. They responded promptly and killed all seven kernels. GPU freed shortly after.
+
+The episode is a real concern: the L4 is shared, there is no scheduler (no SLURM, no queue), and another user can occupy it for hours without notice. For the multi-seed extension after Wednesday, plan to launch in time windows when the GPU is observably free, and accept that any sweep can be slowed by contention.
+
+**Sweep design.** 30 runs on the `fed-icl-free` branch: 3 models × 5 pool sizes (30, 60, 120, 250, 500) × 2 seeds (7, 42). Smaller than the existing Fed-ICL pool sweep (which has 3 seeds per cell) because of the constrained time budget before Wednesday's meeting. The two seeds match two of the three seeds in the Fed-ICL pool sweep, which makes paired comparison possible at every Fed-ICL-Free cell.
+
+**Sequential launch.** Following the lesson from the 21 June sweep (36 concurrent runs finished in 12-18 hours of wall clock with queue contention slowing each run), this sweep ran sequentially: one cell at a time in a single tmux session, each cell completing before the next started. The Ollama instance never saw more than one client query at a time. Single bash launcher script `run_fedfree_pool_sweep.sh` looped over models and pools, writing results into `~/fed_icl_results/fed_icl_free/` and per-cell logs into `logs/`. Master log captured timestamps and cumulative elapsed.
+
+**Sweep execution.** Launched at 18:11 BST. Completed at 01:17 BST Wed morning. Total wall clock 427 minutes (7h 7m). Per-model totals:
+
+- phi3 (10 runs): 100 min, ~10 min/run
+- mistral (10 runs): 117 min, ~12 min/run  
+- llama3 (10 runs): 210 min, ~21 min/run
+
+Per-run time scaled with model size and pool size. Llama3 pool=500 cells were the slowest at 33-38 min each, consistent with more select_examples work on a larger pool during round-1 relabelling. Each run produced one results JSON plus one per-cell log. All 30 cells wrote results files; the original sweep-validator script flagged warnings for not finding `EXPERIMENT COMPLETE` strings, but inspection of the logs showed the actual completion string is `Results saved to ...`, which is a grep mismatch, not a missing-results problem. All 30 JSONs verified present and non-empty.
+
+**Results moved to Mac.** scp'd all 30 Fed-ICL-Free JSONs into `~/Desktop/fed_icl_results/fed_icl_free/` and mirrored the 55 Fed-ICL JSONs into `~/Desktop/fed_icl_results/fed_icl/`. Local directory layout now matches the server's separation of variants. analyse.py and the plotting scripts moved into `~/Desktop/fed_icl_project/scripts/` (they had been living in `~/fed_icl_l4_results/` outside the repo, which was wrong: project code belongs in the project repo).
+
+**Analyse.py extended.** Added a `--results-dir` CLI argument using argparse, defaulting to `.` for backwards compatibility with the previous "cd into the dir and run" workflow. New invocation: `python3 analyse.py --results-dir <path>`. Same script now used for both variants without modification. Verified against the existing Fed-ICL data that the numbers match the 2026-06-22 entry (44% negative-rate, llama3 pool=120 sole reliable cell, Kendall's W values 0.044 and 0.178).
+
+**Fed-ICL-Free per-cell summary.** Of 30 cells, 6 show R6_gain < 0 (20% negative rate). Five cells have mean - std > 0 on R6_gain:
+
+| Cell | Mean | Std | Lower bound |
+|---|---|---|---|
+| mistral pool=60 | +3.0 | 2.8 | +0.2 |
+| mistral pool=120 | +1.5 | 0.7 | +0.8 |
+| mistral pool=250 | +3.0 | 1.4 | +1.6 |
+| llama3 pool=120 | +5.5 | 0.7 | +4.8 |
+| llama3 pool=250 | +8.5 | 7.8 | +0.7 |
+
+With only n=2 seeds per cell, standard-deviation estimates are unreliable. These cells are suggestive direction rather than established findings. Kendall's W at n=2 is uninformative: phi3 0.35, mistral 0.05, llama3 0.25. The pattern needs a third seed before W can be read meaningfully.
+
+The local-gain correlation persists across variants. Per-model Pearson r on Fed-ICL-Free: phi3 -0.85, llama3 -0.84, mistral -0.28. Phi3 and llama3 stay strongly negative, consistent with Fed-ICL. Mistral weakens from -0.52 to -0.28, which is interesting given that mistral's gain pattern also changed: on Fed-ICL it was nearly flat across pools; on Fed-ICL-Free three pool sizes have positive lower bounds. The weakened correlation may reflect that mistral's gain is no longer driven primarily by partition rescue.
+
+**Trap: cross-variant aggregate comparison overstates the difference.** A naive comparison of the two variants' aggregate statistics says Fed-ICL-Free is clearly better: negative-rate halved (44% to 20%), reliable-cells jumped from 1 to 5. But these aggregates use different cell coverages. Fed-ICL has 52 cells including seeds 13, 99, 3 at some pools and the multi-seed validation extension at pool=250. Fed-ICL-Free has 30 cells with only seeds 7 and 42. Seeds 3 and 13 are known from Fed-ICL data to be "bad" partition seeds that produce many negative gains. Their absence from Fed-ICL-Free's seed pool inflates the Fed-ICL-Free numbers. The cross-variant aggregate comparison is not apples-to-apples.
+
+The paired comparison (next section) is the apples-to-apples version.
+
+**Paired comparison (the headline).** Built `compare_variants.py` to match cells across both result directories by (model, pool, seed). All 30 Fed-ICL-Free cells have a Fed-ICL counterpart. For each matched cell, computed R6_gain and HO_gain under each variant and the difference (Fed-ICL-Free minus Fed-ICL).
+
+Summary across 30 paired cells:
+- Mean delta_R6: -0.53pp (Fed-ICL-Free better on R6 in 11/30 cells)
+- Mean delta_HO: +0.60pp (Fed-ICL-Free better on HO in 17/30 cells)
+
+Variant difference at matched conditions is small. Most cells are within ±3pp on both metrics. Fed-ICL-Free is slightly worse on R6 on average and slightly better on HO. The HO direction is the one that matters for the dissertation (HO is the primary metric established in the 2026-06-22 entry).
+
+Per-model breakdown of HO improvements under Fed-ICL-Free:
+- phi3: 7/10 cells improved on HO, mean delta_HO around +2pp
+- mistral: 6/10 improved, 3 tied, mean delta_HO around +1pp; only mistral pool=250 cells got worse
+- llama3: 6/10 improved, but the largest negatives are here too (pool=250 seed=7 at -8pp, pool=500 seed=7 at -7pp). Llama3 has both the largest improvements and the largest regressions under the variant switch.
+
+llama3 pool=120 holds across variants. Fed-ICL: +3, +10 at seeds 7, 42. Fed-ICL-Free: +5, +6 at the same seeds. The mean drops slightly but the std collapses, so mean - std improves. The original "pool=120 is the most reliable cell" finding from 2026-06-22 holds under the variant correction.
+
+**Revised framing for Wednesday.** Earlier today I read the per-variant aggregate numbers and thought Fed-ICL-Free was substantively better. After running the paired comparison this is too strong a claim. The honest headline is: variants give similar paired results at matched conditions, mean differences are within ±1pp on both metrics, HO direction slightly favours Fed-ICL-Free, and the methodology correction is the substantive contribution rather than the variant being a discovery.
+
+This makes Path A (reframe as Fed-ICL) harder to defend: the proposal said Fed-ICL-Free, and Fed-ICL-Free is slightly better on the primary metric in the variant the proposal specified. Path B (switch to Fed-ICL-Free and rerun) is now the proposal-aligned and data-supported choice. Path C (compare both) is still defensible but less novel than I thought four hours ago, because the variant effect at this scale is small.
+
+**GPU contention returned.** Attempted to launch a 15-run seed=13 fill-in around 03:30 to bring Fed-ICL-Free to n=3 across the pool sweep. nvidia-smi showed 97% utilisation and 10.8GB used by hj452's dissertation env again. They are still working. Aborted the launch. Plan: launch the seed=13 fill-in after Wednesday's meeting if Dr. Jin endorses Path B or C, at a time the L4 is observably free.
+
+**Repo hygiene committed.** All scripts (analyse.py, plot_pool_sweep.py, plot_analysis.py, peek_pool_sweep.py, compare_variants.py) now in `~/Desktop/fed_icl_project/scripts/`. .gitignore updated to handle the allow-list completeness issue from earlier. SSH authentication for both Mac and server pointing at GitHub SSH endpoint.
+
+**Pending.** Wednesday supervision 2026-06-24 with Dr. Jin. After meeting, depending on path endorsed: launch seed=13 fill-in (15 runs, ~3h on a free L4) to bring Fed-ICL-Free pool sweep to n=3; launch seeds 3, 99 at pool=250 (6 runs) to bring multi-seed validation to full parity; revisit the α sweep plan (proposal §3.3 specifies α ∈ {0.05, 0.5, 10.0}); decide whether to revisit the sci-tech-label-pilot or harder-dataset-experiment branches. Begin drafting dissertation methods chapter.
+
+
+### 2026-06-24 Supervision meeting: directives
+
+Outcomes (written up retrospectively).
+
+**Three seeds and both variants approved.** Dr. Jin approved three seeds
+per condition as the design floor, and running both Fed-ICL and
+Fed-ICL-Free for comparison.
+
+**Full dataset, 80/20 split.** I described the current setup as 250 total
+examples split 150 training / 100 testing, roughly 60/40. Dr. Jin
+recommended switching to the entire dataset with an 80/20 train/test
+split. Operationalisation resolved on 2026-07-13 (see below).
+
+**Config discrepancy, recorded for honesty.** The split I described in the
+meeting does not match the config: actual defaults (CLIENT_POOL_SIZE=250,
+NUM_SERVER_QUERIES=100, EVAL_SIZE=100) put it nearer 78/22, and the 250 I
+quoted as the total is the client pool alone. Numbers reported in
+supervision must come from the config file, not memory. Added to the
+pre-meeting checklist.
+
+
+---
+
+### [late June] Variant attribution: the codebase runs Fed-ICL, not Fed-ICL-Free
+
+**Decision.** Review of `predict_server_queries` confirms the example pool
+is `local_data + relabelled_data`, conditioning on both D^i and D^i_k: the
+full Fed-ICL variant. Fed-ICL-Free uses the relabelled set only. The
+proposal (Section 2.4, Objective 1) states Fed-ICL-Free is the adopted
+variant, so every result to date is misattributed there. The dissertation
+must correct this, and the proposal-to-dissertation rewrite must not carry
+the sentence over. The `fed-icl-free` branch implements the
+replacement-only pool (superseded 2026-07-13, see below).
+
+---
+
+### 2026-07-01 Eval methodology issue: eval set coupled to the partition seed
+
+**Problem.** `data.py` drew the held-out eval set with `default_rng(seed + 1)`. Every partition seed therefore also produced a different eval sample, so the multi-seed comparisons varied two things at once: the partition and the test sample. 
+The seed-dominance finding (partition seed determines the direction of federation gain across all 15 cells) could not distinguish partition structure from evaluation-sampling luck. At n=100 the binomial standard error is ~5pp, the same order as the gains being compared; some part of the -7pp to +13pp range is eval-sampling noise, unknowable from the existing runs.
+
+**Fix designed.** EVAL_SEED=12345 fixed and decoupled from SEED;
+EVAL_SIZE=1000 (SE ~1.5pp); deterministic class-balanced sampler (250 per
+class from the canonical AG News test split). Verified by mock test:
+balance across four classes, determinism across calls, independence from
+the partition seed. Committed 2026-07-13.
+
+**Consequence.** All multi-seed results predating the fix are internally
+comparable to each other but not to post-fix runs. The 5-seed x 3-model
+grid reruns under the fixed protocol before any dissertation claim rests
+on it.
+
+---
+
+### 2026-07-06 Code review against Wang et al.
+
+Line-by-line review of the implementation against the paper (Algorithm 1,
+practical improvements appendix, experimental setup). Four fidelity gaps
+found beyond the three already documented:
+
+1. Default SELECTION_STRATEGY=random corresponds to the paper's
+   no-filtering *ablation*, not the main method: the practical algorithm
+   always applies kNN filtering (paraphrase-MiniLM-L6-v2) and the paper's
+   own ablation shows filtering is critical.
+2. Shots and temperature: paper uses 5 context examples at temperature
+   0.1; defaults here are K=3 at 0.0. The K sweep covers 5; replication
+   claims should reference the K=5 condition.
+3. Dirichlet alpha levels differ (paper MMLU 0.001/1.0/100 vs 0.05/0.5/
+   10.0 here), justified by pool size: alpha=0.001 with 250 examples and
+   3 clients degenerates.
+4. The union pool (local + relabelled) samples NUM_SHOTS from the
+   concatenation rather than presenting both filtered sets. Faithful in
+   spirit (the paper conditions on both sets, which contain the same
+   texts), different in mechanism.
+
+Also identified: the "world" parse fallback biasing per-class accuracy and
+poisoning relabelled pools; the duplicate build_icl_prompt definition; the
+client-0 tie-break bias in aggregate_predictions (Counter insertion order
+wins 1-1-1 splits, and client 0 is also the local-only baseline client).
+Fix set specified; committed 2026-07-13. Useful equivalence noted: with
+per-query kNN selection, the paper's round-1 prefilter (Algorithm 2) is
+output-equivalent at these pool sizes, so it is not separately
+implemented.
+
+---
+
+### 2026-07-09 Missed supervision meeting
+
+Could not attend; second reschedule. Apology sent, followed by a written
+progress update and a nine-slide deck covering the sweep results, the eval
+fix, the fidelity fixes, and the plan to submission. Three asks: (1)
+confirm the 80/20 reading (re-split vs full canonical splits,
+recommendation B), (2) next meeting in person at her convenience, (3)
+chase or park the pool=500 anomaly.
+---
+
+### 2026-07-13 Commit session: fix set landed, Reading B adopted
+
+**Run.** Six commits pushed to main, in order: (1) duplicate
+build_icl_prompt removed; (2) parse fallback changed to None sentinel,
+dropped from relabelled pools, excluded from votes, scored as incorrect;
+(3) eval decoupling per the 2026-07-01 entry, tagged eval-fix-v1 to mark
+the protocol discontinuity; (4) embedding kNN selection
+(paraphrase-MiniLM-L6-v2) as default SELECTION_STRATEGY, lexical overlap
+and random retained as labelled ablation arms, sentence-transformers added
+to requirements; (5) seeded uniform tie-break in majority-vote
+aggregation with per-round tie logging; (6) sampling frames reported in
+the data summary.
+
+**Verification records.**
+- Eval decoupling: `python data.py` under FED_ICL_SEED=42 and 7 produces
+  different partitions and server queries but a byte-identical eval
+  sample; n=1000 class-balanced.
+- Tie-break determinism: frozen RNG state yields the same pick three times
+  (['world', 'world', 'world'] at SEED+1000).
+- Tie-break fairness: 3000 draws from one RNG give world=1034,
+  sports=1001, business=965; max deviation ~1.3 sigma from uniform. No
+  systematic favourite, unlike the previous client-0 rule.
+
+**Decision: 80/20 operationalised as Reading B.** Sampling frames are the
+full canonical AG News splits (train 120,000 for client pools and server
+queries; test 7,600 for evaluation); per-run draws are pool=250,
+queries=100, eval=1000. Reading A (re-splitting the combined 127,600)
+breaks comparability with published numbers and all prior runs for no
+benefit. A literal all-data partition (~40k per client) was considered and
+rejected: relabelling scales with pool size (720k LLM calls per run) and,
+more importantly, abundance destroys the scarcity premise the paper and
+this project both depend on; even alpha=0.05 leaves hundreds of every
+class per client, collapsing heterogeneity. [Dr. Jin's confirmation:
+date/medium.]
+
+**Pending.** Commit 7 (this backfill). Commit 8: fold Fed-ICL-Free into a
+FED_ICL_VARIANT config flag with the variant tagged in result filenames
+and JSONs; archive the fed-icl-free branch as a tag and delete it. Both
+variants remain available and now provably differ by one line, which is
+the property the comparison needs. Then: smoke run at EVAL=100 on the GPU
+box, per-model call timing, launch the fixed-protocol 5-seed x 3-model
+grid (~6,300 LLM calls per run; zero-shot baseline computed once per model
+since it is deterministic at temperature 0 on a fixed eval set).
