@@ -11,20 +11,6 @@ import time
 from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS
 from data import LABEL_SPACE
 
-
-def build_icl_prompt(examples: list, query_text: str) -> str:
-    prompt = (
-        "Classify the following news headline into exactly one of these categories: "
-        "\"world\", \"sports\", \"business\", or \"science\". "
-        "Reply with only the category label, nothing else.\n\n"
-    )
-
-    for text, label in examples:
-        prompt += f"Headline: \"{text}\"\nCategory: {label}\n\n"
-
-    prompt += f"Headline: \"{query_text}\"\nCategory:"
-    return prompt
-
 _PARSE_STATS = {"total": 0, "fallback": 0, "examples": []}
 
 def build_icl_prompt(examples: list, query_text: str) -> str:
