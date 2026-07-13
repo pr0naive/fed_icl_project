@@ -74,7 +74,9 @@ class FedICLClient:
             examples = self.select_examples(text, global_context, NUM_SHOTS)
             examples = self.order_examples(examples, text)
             predicted_label = predict_with_icl(examples, text, model=self.model)
-            self.relabelled_data.append((text, predicted_label))
+            # Unparseable output (None): drop the example for this round rather than writing a wrong label into the few-shot pool.
+            if predicted_label is not None:
+                self.relabelled_data.append((text, predicted_label))
 
     def predict_server_queries(self, server_queries: list, global_context: list) -> list:
         from llm import predict_with_icl
@@ -115,7 +117,8 @@ class FedICLServer:
             for client_preds in all_client_predictions:
                 if q_idx < len(client_preds):
                     _, label = client_preds[q_idx]
-                    votes.append(label)
+                    if label is not None:   # exclude unparseable outputs
+                        votes.append(label)
 
             if votes:
                 vote_counts = Counter(votes)

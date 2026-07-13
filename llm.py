@@ -68,12 +68,12 @@ def parse_label(raw_response: str) -> str:
         if tok in LABEL_SPACE:
             return tok
 
-    # Fallback: log and return LABEL_SPACE[0]. Behaviour unchanged downstream,
-    # but we now know the fallback rate per run.
+    # Fallback: return None (sentinel). Returning LABEL_SPACE[0] silently inflated 'world' recall and injected wrong labels into relabelled_data.
+    # Callers must treat None as: incorrect in evaluation, excluded from relabelled pools, and excluded from server votes.
     _PARSE_STATS["fallback"] += 1
     if len(_PARSE_STATS["examples"]) < 30:
         _PARSE_STATS["examples"].append(raw_response[:120])
-    return LABEL_SPACE[0]
+    return None
 
 def get_parse_stats():
     total = _PARSE_STATS["total"]
