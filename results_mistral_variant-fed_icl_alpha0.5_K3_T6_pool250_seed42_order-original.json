@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.23
+    },
+    {
+      "round": 1,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 151.51409578323364
+    },
+    {
+      "round": 2,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 149.54978966712952
+    },
+    {
+      "round": 3,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 150.0283169746399
+    },
+    {
+      "round": 4,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 149.55730938911438
+    },
+    {
+      "round": 5,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 149.22324109077454
+    },
+    {
+      "round": 6,
+      "accuracy": 0.82,
+      "correct": 82,
+      "total": 100,
+      "time_seconds": 147.5632963180542
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.714,
+    "local_only": 0.766
+  },
+  "eval_accuracy": 0.739,
+  "total_time_seconds": 897.4361097812653,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 186,
+    "fallback_rate": 0.029523809523809525,
+    "sample_unparseable": [
+      "None (This headline does not fit neatly",
+      "\"entertainment\"",
+      "technology (can be considered as a subcategory of",
+      "None (The headline does not fit into any",
+      "SPACE",
+      "technology (which can be considered a subcategory of",
+      "technology (or, if specifically categorizing, it",
+      "\"arts\" (or possibly \"technology\",",
+      "politics",
+      "\"world\" (assuming it's a",
+      "technology (can be considered as a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (can also be considered as business)",
+      "technology (which can be considered a subcategory of",
+      "\"world\" (technology subcategory)",
+      "technology (which can be considered a subcategory of",
+      "technology (can be considered as a subcategory of",
+      "entertainment (which can be considered a subcategory of",
+      "\"technology\" (since it discusses software",
+      "entertainment (which can be further classified as gaming)",
+      "This headline does not clearly fall into any of",
+      "technology (which can be considered a subcategory of",
+      "\"entertainment\"",
+      "entertainment (which can be considered a subcategory of",
+      "technology (can be considered as a subcategory of",
+      "entertainment",
+      "entertainment (which can be considered a subcategory of",
+      "None (This headline does not fit into any",
+      "politics",
+      "tech/business"
+    ]
+  },
+  "variant": "fed_icl"
+}

@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 99,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.28
+    },
+    {
+      "round": 1,
+      "accuracy": 0.65,
+      "correct": 65,
+      "total": 100,
+      "time_seconds": 148.74555492401123
+    },
+    {
+      "round": 2,
+      "accuracy": 0.65,
+      "correct": 65,
+      "total": 100,
+      "time_seconds": 145.44199109077454
+    },
+    {
+      "round": 3,
+      "accuracy": 0.64,
+      "correct": 64,
+      "total": 100,
+      "time_seconds": 147.86875438690186
+    },
+    {
+      "round": 4,
+      "accuracy": 0.62,
+      "correct": 62,
+      "total": 100,
+      "time_seconds": 148.37116360664368
+    },
+    {
+      "round": 5,
+      "accuracy": 0.66,
+      "correct": 66,
+      "total": 100,
+      "time_seconds": 147.53077960014343
+    },
+    {
+      "round": 6,
+      "accuracy": 0.68,
+      "correct": 68,
+      "total": 100,
+      "time_seconds": 149.06490921974182
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.531,
+    "local_only": 0.603
+  },
+  "eval_accuracy": 0.569,
+  "total_time_seconds": 887.0232141017914,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 79,
+    "fallback_rate": 0.01253968253968254,
+    "sample_unparseable": [
+      "politics (not in given categories)",
+      "politics (not in given categories, but closest",
+      "politics (not in given categories)",
+      "music industry (not listed in options)",
+      "politics (Note: Since politics often falls under",
+      "politics (not listed)",
+      "entertainment (not in given categories)",
+      "politics",
+      "horse racing (not listed as an option)",
+      "politics (This category is not among your given",
+      "politics (Note: Since politics is not an",
+      "space",
+      "politics (Note: Since politics is not one",
+      "music industry (not listed in options)",
+      "deaths",
+      "politics",
+      "entertainment (Note: Since \"entertain",
+      "entertainment (not in given categories)",
+      "software development  \n\n(Note for the user",
+      "health\n\nHeadline: \"Siem",
+      "politics",
+      "health\n\nHeadline: \"Tri-",
+      "entertainment (not in given categories)",
+      "society",
+      "software development\n\n(Note for the user:",
+      "health\n\nHeadline: \"Siem",
+      "music",
+      "health\n\nHeadline: \"Banks",
+      "politics (Note: Since politics is not one",
+      "entertainment (not listed in categories)"
+    ]
+  },
+  "variant": "fed_icl"
+}

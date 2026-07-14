@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 7,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.21
+    },
+    {
+      "round": 1,
+      "accuracy": 0.72,
+      "correct": 72,
+      "total": 100,
+      "time_seconds": 145.33545660972595
+    },
+    {
+      "round": 2,
+      "accuracy": 0.67,
+      "correct": 67,
+      "total": 100,
+      "time_seconds": 147.4039821624756
+    },
+    {
+      "round": 3,
+      "accuracy": 0.72,
+      "correct": 72,
+      "total": 100,
+      "time_seconds": 147.27791047096252
+    },
+    {
+      "round": 4,
+      "accuracy": 0.7,
+      "correct": 70,
+      "total": 100,
+      "time_seconds": 150.5586166381836
+    },
+    {
+      "round": 5,
+      "accuracy": 0.73,
+      "correct": 73,
+      "total": 100,
+      "time_seconds": 148.68921947479248
+    },
+    {
+      "round": 6,
+      "accuracy": 0.75,
+      "correct": 75,
+      "total": 100,
+      "time_seconds": 148.95486116409302
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.531,
+    "local_only": 0.569
+  },
+  "eval_accuracy": 0.59,
+  "total_time_seconds": 888.2201063632965,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 98,
+    "fallback_rate": 0.015555555555555555,
+    "sample_unparseable": [
+      "politics (not in given categories)",
+      "politics (not in given categories, but closest",
+      "politics (not in given categories)",
+      "music industry (not listed in options)",
+      "politics (Note: Since politics often falls under",
+      "politics (not listed)",
+      "politics",
+      "football (sports)",
+      "politics",
+      "politics (Note: Since politics is not an",
+      "politics",
+      "security technology (not in the given categories)",
+      "football (not listed in the categories)",
+      "games",
+      "football",
+      "politics",
+      "politics",
+      "politics (not listed among provided categories)",
+      "music industry (not listed)",
+      "computer security",
+      "entertainment (not in given categories)",
+      "politics (Note: Since politics is not an",
+      "politics (not listed as an option)",
+      "security",
+      "politics",
+      "music industry (not listed)",
+      "politics",
+      "computer security",
+      "healthcare (not in given categories)",
+      "entertainment (not listed in categories)"
+    ]
+  },
+  "variant": "fed_icl"
+}

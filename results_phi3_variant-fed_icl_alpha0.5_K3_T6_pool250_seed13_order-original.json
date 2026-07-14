@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 13,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.25
+    },
+    {
+      "round": 1,
+      "accuracy": 0.64,
+      "correct": 64,
+      "total": 100,
+      "time_seconds": 150.46595740318298
+    },
+    {
+      "round": 2,
+      "accuracy": 0.63,
+      "correct": 63,
+      "total": 100,
+      "time_seconds": 147.75453639030457
+    },
+    {
+      "round": 3,
+      "accuracy": 0.62,
+      "correct": 62,
+      "total": 100,
+      "time_seconds": 149.06792378425598
+    },
+    {
+      "round": 4,
+      "accuracy": 0.65,
+      "correct": 65,
+      "total": 100,
+      "time_seconds": 152.29261589050293
+    },
+    {
+      "round": 5,
+      "accuracy": 0.62,
+      "correct": 62,
+      "total": 100,
+      "time_seconds": 152.8658857345581
+    },
+    {
+      "round": 6,
+      "accuracy": 0.66,
+      "correct": 66,
+      "total": 100,
+      "time_seconds": 148.68368244171143
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.531,
+    "local_only": 0.561
+  },
+  "eval_accuracy": 0.567,
+  "total_time_seconds": 901.1306629180908,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 92,
+    "fallback_rate": 0.014603174603174604,
+    "sample_unparseable": [
+      "politics (not in given categories)",
+      "politics (not in given categories, but closest",
+      "politics (not in given categories)",
+      "music industry (not listed in options)",
+      "politics (Note: Since politics often falls under",
+      "politics (not listed)",
+      "entertainment",
+      "politics",
+      "politics (not in the given categories)",
+      "music industry (not listed in categories)",
+      "politics",
+      "politics",
+      "privacy\n\nHeadline: \"Google bu",
+      "entertainment (not listed in the categories)",
+      "entertainment (Note: Since \"entertain",
+      "politics",
+      "security\n\nHeadline: \"British",
+      "politics",
+      "electronics, technology\n\nHeadline:",
+      "games",
+      "entertainment (Note: Since \"entertain",
+      "politics (Note: Since politics is not an",
+      "security\n\n(Note for the user: The",
+      "politics",
+      "politics",
+      "medicine (not listed)",
+      "politics (Note: Since politics is not one",
+      "entertainment (not in provided categories)",
+      "politics (not in given categories, but closest",
+      "politics (Note: Since politics is not one"
+    ]
+  },
+  "variant": "fed_icl"
+}

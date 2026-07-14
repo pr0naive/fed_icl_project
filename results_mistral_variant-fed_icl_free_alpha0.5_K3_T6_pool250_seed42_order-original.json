@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 40,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.22
+    },
+    {
+      "round": 1,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 155.46176075935364
+    },
+    {
+      "round": 2,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 154.93032813072205
+    },
+    {
+      "round": 3,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 154.2127764225006
+    },
+    {
+      "round": 4,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 154.82254099845886
+    },
+    {
+      "round": 5,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 155.8195674419403
+    },
+    {
+      "round": 6,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 154.6389865875244
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.7,
+    "local_only": 0.85
+  },
+  "eval_accuracy": 0.775,
+  "total_time_seconds": 929.8860230445862,
+  "parse_stats": {
+    "total_calls": 3420,
+    "fallback_count": 137,
+    "fallback_rate": 0.040058479532163745,
+    "sample_unparseable": [
+      "technology (or business)",
+      "technology (or business)",
+      "technology (a subcategory of business)",
+      "technology (a subcategory of business)",
+      "politics (which can be considered a subcategory of",
+      "technology (a subcategory of science)",
+      "technology (which can be considered a subcategory under",
+      "politics (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (not explicitly mentioned categories, but closest fit",
+      "technology (can be considered as a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (a subcategory of science)",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (although it could arguably fit under",
+      "technology (which can be considered a subcategory of",
+      "technology (can be considered a subcategory under \"",
+      "technology (which can be considered a subcategory of",
+      "technology (or business)",
+      "technology (a subcategory of world)",
+      "technology (or business)",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory under",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of",
+      "technology (a subcategory of business)",
+      "technology (which can be considered a subcategory of",
+      "technology (which can be considered a subcategory of"
+    ]
+  },
+  "variant": "fed_icl_free"
+}
