@@ -88,16 +88,19 @@ for f in sorted(Path(RESULTS_DIR).glob("results_*alpha0.5_K3_T6_*_order-original
     d = json.load(open(f))
     base = d.get("baselines", {})
     round_acc = [r["accuracy"] for r in d.get("rounds", [])]
-    r6 = round_acc[-1] if round_acc else None
+    r6 = round_acc[-1] if round_acc else None   # accuracy on the 100 shared-context queries (in-sample)
     local = base.get("local_only")
+    held = d.get("eval_accuracy")               # held-out generalization (n=1000), the fair metric
     rows.append({
         "model": m.group("model"),
         "seed": int(m.group("seed")),
         "zero_shot": base.get("zero_shot"),
         "local_only": local,
         "fed_icl_r6": r6,
-        "held_out": d.get("eval_accuracy"),
-        "gain": (r6 - local) if (r6 is not None and local is not None) else None,
+        "held_out": held,
+        # Federation gain is defined on HELD-OUT, not R6. R6 is accuracy on the
+        # federation's own shared context and overstates generalization by ~9pp.
+        "gain": (held - local) if (held is not None and local is not None) else None,
         "rounds": round_acc,
     })
 
@@ -148,14 +151,14 @@ ax.set_yticks(range(len(MODELS_ORDER)))
 ax.set_yticklabels(MODELS_ORDER)
 ax.set_xlabel("Seed", color=INK)
 ax.set_ylabel("Model", color=INK)
-ax.set_title("Federation gain by model and seed   (α=0.5, K=3, T=6, n=100)",
+ax.set_title("Federation gain by model and seed   (α=0.5, K=3, T=6, held-out n=1000)",
              color=NAVY, pad=10, fontweight="bold")
 
-cbar = fig.colorbar(im, ax=ax, shrink=0.85, label="Fed-ICL R6 − Local-only (pp)")
+cbar = fig.colorbar(im, ax=ax, shrink=0.85, label="Fed-ICL held-out − Local-only (pp)")
 cbar.ax.tick_params(labelsize=9)
 
 fig.text(0.5, -0.06,
-         "Same partition seed produces the same direction of effect across all three models.",
+         "Blue = federation hurts held-out generalization. Negative in 9 of 15 conditions at α=0.5.",
          ha="center", color=MUTED, style="italic", fontsize=9)
 
 fig.savefig(OUTPUT_DIR / "01_gain_heatmap.png")
@@ -198,10 +201,10 @@ ax.axhline(0, color=MUTED, linewidth=0.8, linestyle="--", zorder=1)
 
 ax.set_xticks(range(len(MODELS_ORDER)))
 ax.set_xticklabels(MODELS_ORDER)
-ax.set_ylabel("Federation gain (pp)", color=INK)
+ax.set_ylabel("Held-out federation gain (pp)", color=INK)
 ax.set_xlim(-0.5, len(MODELS_ORDER) - 0.1)
 ax.set_ylim(-12, 17)
-ax.set_title("Federation gain distribution per model   (n=5 seeds each)",
+ax.set_title("Held-out federation gain distribution per model   (n=5 seeds each)",
              color=NAVY, pad=10, fontweight="bold")
 ax.grid(axis="y", linestyle=":", color="#CBD5E1", linewidth=0.5, zorder=0)
 
@@ -236,7 +239,7 @@ for ax, model in zip(axes, MODELS_ORDER):
     ax.set_ylim(55, 90)
     ax.grid(axis="y", linestyle=":", alpha=0.4)
 
-axes[0].set_ylabel("Accuracy (%)", color=INK)
+axes[0].set_ylabel("Shared-context accuracy (%)", color=INK)
 
 # Single shared legend below the panels
 legend_handles = [
@@ -247,10 +250,11 @@ legend_handles = [
 fig.legend(handles=legend_handles, loc="lower center", ncol=len(SEEDS_ORDER),
            bbox_to_anchor=(0.5, -0.05), frameon=False, fontsize=10)
 
-fig.suptitle("Round-by-round Fed-ICL accuracy across five seeds",
+fig.suptitle("Pseudo-label accuracy on the shared context across rounds (convergence diagnostic, n=100)",
              color=NAVY, fontweight="bold", y=1.02)
 fig.text(0.5, -0.13,
-         "Same colour means same seed across all three panels. Round 0 (random init) omitted.",
+         "This is accuracy on the federation's own 100 shared queries, NOT held-out generalization. "
+         "Same colour = same seed. Round 0 omitted.",
          ha="center", color=MUTED, style="italic", fontsize=9)
 
 fig.tight_layout()
@@ -279,10 +283,10 @@ ax.plot([LO, HI], [LO, HI], color="#94A3B8", linestyle="--",
 MODEL_LETTER = {"phi3": "P", "mistral": "M", "llama3": "L"}
 
 for r in rows:
-    if r["local_only"] is None or r["fed_icl_r6"] is None:
+    if r["local_only"] is None or r["held_out"] is None:
         continue
     x = r["local_only"] * 100
-    y = r["fed_icl_r6"] * 100
+    y = r["held_out"] * 100
     ax.scatter(x, y, color=SEED_COLOR[r["seed"]],
                s=160, edgecolor="white", linewidth=1.2, zorder=3)
     ax.annotate(MODEL_LETTER[r["model"]], (x, y),
@@ -292,8 +296,8 @@ for r in rows:
 ax.set_xlim(LO, HI)
 ax.set_ylim(LO, HI)
 ax.set_xlabel("Local-only accuracy (%)", color=INK)
-ax.set_ylabel("Fed-ICL R6 accuracy (%)", color=INK)
-ax.set_title("Federation outcome by partition seed\n"
+ax.set_ylabel("Fed-ICL held-out accuracy (%)", color=INK)
+ax.set_title("Federation outcome by partition seed  (held-out, n=1000)\n"
              "(letter = model: P=phi3, M=mistral, L=llama3)",
              color=NAVY, pad=10, fontweight="bold")
 ax.grid(linestyle=":", color="#CBD5E1", linewidth=0.5, zorder=0)
@@ -318,4 +322,77 @@ fig.savefig(OUTPUT_DIR / "04_fed_vs_local_scatter.png")
 plt.close(fig)
 print(f"  wrote {OUTPUT_DIR / '04_fed_vs_local_scatter.png'}")
 
-print(f"\nDone. Four figures saved to {OUTPUT_DIR}/.")
+# ===========================================================================
+# Figure 5 — In-sample (R6@100) vs out-of-sample (held@1000) gap
+# Shows WHY the R6 metric overstates generalization.
+# ===========================================================================
+fig, ax = plt.subplots(figsize=(8.4, 4.2))
+for i, model in enumerate(MODELS_ORDER):
+    rs = [r for r in rows if r["model"] == model]
+    for r in rs:
+        if r["fed_icl_r6"] is None or r["held_out"] is None:
+            continue
+        ax.plot([i - 0.2, i + 0.2],
+                [r["fed_icl_r6"] * 100, r["held_out"] * 100],
+                color=MODEL_COLOR[model], alpha=0.55, linewidth=1.4, zorder=2)
+        ax.scatter(i - 0.2, r["fed_icl_r6"] * 100, color=MODEL_COLOR[model], s=45, zorder=3)
+        ax.scatter(i + 0.2, r["held_out"] * 100, color=MODEL_COLOR[model], s=45,
+                   marker="s", edgecolor="white", linewidth=0.6, zorder=3)
+    locs = [r["local_only"] * 100 for r in rs if r["local_only"] is not None]
+    if locs:
+        lo = statistics.mean(locs)
+        ax.plot([i - 0.32, i + 0.32], [lo, lo], color=INK, linewidth=1.4, linestyle="--", zorder=4)
+        ax.text(i, lo - 1.6, "local-only (mean)", ha="center", fontsize=8, color=INK)
+ax.set_xticks(range(len(MODELS_ORDER)))
+ax.set_xticklabels(MODELS_ORDER)
+ax.set_ylabel("Accuracy (%)", color=INK)
+ax.set_ylim(50, 90)
+ax.text(0.01, 0.97, "\u25cf R6 on shared context (n=100)    \u25a0 held-out (n=1000)",
+        transform=ax.transAxes, fontsize=9, va="top", color=INK)
+ax.set_title("The in-sample / out-of-sample gap behind the apparent gain",
+             color=NAVY, pad=10, fontweight="bold")
+ax.grid(axis="y", linestyle=":", alpha=0.4)
+fig.text(0.5, -0.02,
+         "Each line drops from what the federation scores on its OWN context to what it generalizes to. "
+         "The ~9pp fall is the overstatement.",
+         ha="center", color=MUTED, style="italic", fontsize=9)
+fig.tight_layout()
+fig.savefig(OUTPUT_DIR / "05_insample_gap.png")
+plt.close(fig)
+print(f"  wrote {OUTPUT_DIR / '05_insample_gap.png'}")
+
+# ===========================================================================
+# Figure 6 — Partition stability: local-only vs federated held-out
+# Shows the gain SIGN is driven by local baseline volatility.
+# ===========================================================================
+fig, ax = plt.subplots(figsize=(8.4, 4.2))
+for i, model in enumerate(MODELS_ORDER):
+    locs = [find(model, s)["local_only"] * 100 for s in SEEDS_ORDER]
+    helds = [find(model, s)["held_out"] * 100 for s in SEEDS_ORDER]
+    xL, xF = i - 0.15, i + 0.15
+    ax.scatter([xL] * len(locs), locs, color=MODEL_COLOR[model], s=40, alpha=0.6)
+    ax.scatter([xF] * len(helds), helds, color=MODEL_COLOR[model], s=40,
+               marker="s", edgecolor="white", linewidth=0.6)
+    ax.plot([xL - 0.08, xL + 0.08], [statistics.mean(locs)] * 2, color=MODEL_COLOR[model], linewidth=2)
+    ax.plot([xF - 0.08, xF + 0.08], [statistics.mean(helds)] * 2, color=MODEL_COLOR[model], linewidth=2)
+    ax.text(xL, min(locs) - 2.2, f"\u03c3={statistics.pstdev(locs):.1f}", ha="center", fontsize=8)
+    ax.text(xF, min(helds) - 2.2, f"\u03c3={statistics.pstdev(helds):.1f}", ha="center", fontsize=8)
+ax.set_xticks(range(len(MODELS_ORDER)))
+ax.set_xticklabels(MODELS_ORDER)
+ax.set_ylabel("Held-out accuracy (%)", color=INK)
+ax.set_ylim(60, 82)
+ax.text(0.01, 0.97, "\u25cf local-only (per seed)     \u25a0 federated held-out (per seed)",
+        transform=ax.transAxes, fontsize=9, va="top", color=INK)
+ax.set_title("Federation is partition-stable; the local baseline is a lottery",
+             color=NAVY, pad=10, fontweight="bold")
+ax.grid(axis="y", linestyle=":", alpha=0.4)
+fig.text(0.5, -0.02,
+         "Local-only swings ~2x more across seeds than federated held-out. The sign of 'federation gain' "
+         "is set by which way local's luck fell.",
+         ha="center", color=MUTED, style="italic", fontsize=9)
+fig.tight_layout()
+fig.savefig(OUTPUT_DIR / "06_partition_stability.png")
+plt.close(fig)
+print(f"  wrote {OUTPUT_DIR / '06_partition_stability.png'}")
+
+print(f"\nDone. Six figures saved to {OUTPUT_DIR}/.")
