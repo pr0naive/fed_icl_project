@@ -70,8 +70,11 @@ plt.rcParams.update({
 # ---------------------------------------------------------------------------
 # Load data
 # ---------------------------------------------------------------------------
+PLOT_VARIANT = "fed_icl"
+
 PATTERN = re.compile(
-    r"results_(?P<model>[a-z0-9]+)_alpha(?P<alpha>[0-9.]+)_K(?P<K>\d+)_T(?P<T>\d+)"
+    r"results_(?P<model>[a-z0-9]+)_variant-(?P<variant>[a-z_]+)"
+    r"_alpha(?P<alpha>[0-9.]+)_K(?P<K>\d+)_T(?P<T>\d+)_pool(?P<pool>\d+)"
     r"_seed(?P<seed>\d+)_order-(?P<order>[a-z_]+)\.json"
 )
 
@@ -79,6 +82,8 @@ rows = []
 for f in sorted(Path(RESULTS_DIR).glob("results_*alpha0.5_K3_T6_*_order-original.json")):
     m = PATTERN.match(f.name)
     if not m:
+        continue
+    if m.group("variant") != PLOT_VARIANT:
         continue
     d = json.load(open(f))
     base = d.get("baselines", {})
