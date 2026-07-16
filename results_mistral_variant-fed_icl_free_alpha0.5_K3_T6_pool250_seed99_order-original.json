@@ -9,67 +9,67 @@
     "eval_size": 1000,
     "selection_strategy": "similarity_embedding",
     "order_strategy": "original",
-    "seed": 42,
+    "seed": 99,
     "client_pool_size": 250
   },
   "rounds": [
     {
       "round": 0,
-      "accuracy": 0.23
+      "accuracy": 0.28
     },
     {
       "round": 1,
-      "accuracy": 0.79,
-      "correct": 79,
+      "accuracy": 0.8,
+      "correct": 80,
       "total": 100,
-      "time_seconds": 151.51681780815125
+      "time_seconds": 150.09166836738586
     },
     {
       "round": 2,
-      "accuracy": 0.81,
-      "correct": 81,
+      "accuracy": 0.83,
+      "correct": 83,
       "total": 100,
-      "time_seconds": 145.83995246887207
+      "time_seconds": 147.61968994140625
     },
     {
       "round": 3,
-      "accuracy": 0.8,
-      "correct": 80,
+      "accuracy": 0.84,
+      "correct": 84,
       "total": 100,
-      "time_seconds": 148.51166701316833
+      "time_seconds": 147.82190322875977
     },
     {
       "round": 4,
-      "accuracy": 0.8,
-      "correct": 80,
+      "accuracy": 0.83,
+      "correct": 83,
       "total": 100,
-      "time_seconds": 150.16335248947144
+      "time_seconds": 146.52967810630798
     },
     {
       "round": 5,
-      "accuracy": 0.78,
-      "correct": 78,
+      "accuracy": 0.85,
+      "correct": 85,
       "total": 100,
-      "time_seconds": 149.7528305053711
+      "time_seconds": 145.3353943824768
     },
     {
       "round": 6,
-      "accuracy": 0.78,
-      "correct": 78,
+      "accuracy": 0.82,
+      "correct": 82,
       "total": 100,
-      "time_seconds": 152.1313292980194
+      "time_seconds": 143.9831886291504
     }
   ],
   "baselines": {
     "zero_shot": 0.714,
-    "local_only": 0.766
+    "local_only": 0.773
   },
-  "eval_accuracy": 0.712,
-  "total_time_seconds": 897.9160158634186,
+  "eval_accuracy": 0.715,
+  "total_time_seconds": 881.3815865516663,
   "parse_stats": {
     "total_calls": 6300,
-    "fallback_count": 188,
-    "fallback_rate": 0.029841269841269842,
+    "fallback_count": 137,
+    "fallback_rate": 0.021746031746031746,
     "sample_unparseable": [
       "None (This headline does not fit neatly",
       "\"entertainment\"",

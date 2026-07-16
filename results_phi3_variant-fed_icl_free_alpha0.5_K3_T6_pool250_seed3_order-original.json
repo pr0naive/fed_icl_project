@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 3,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.29
+    },
+    {
+      "round": 1,
+      "accuracy": 0.62,
+      "correct": 62,
+      "total": 100,
+      "time_seconds": 147.80643963813782
+    },
+    {
+      "round": 2,
+      "accuracy": 0.64,
+      "correct": 64,
+      "total": 100,
+      "time_seconds": 150.8501422405243
+    },
+    {
+      "round": 3,
+      "accuracy": 0.6,
+      "correct": 60,
+      "total": 100,
+      "time_seconds": 152.31826066970825
+    },
+    {
+      "round": 4,
+      "accuracy": 0.63,
+      "correct": 63,
+      "total": 100,
+      "time_seconds": 149.1537094116211
+    },
+    {
+      "round": 5,
+      "accuracy": 0.61,
+      "correct": 61,
+      "total": 100,
+      "time_seconds": 147.90385174751282
+    },
+    {
+      "round": 6,
+      "accuracy": 0.69,
+      "correct": 69,
+      "total": 100,
+      "time_seconds": 147.4859127998352
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.532,
+    "local_only": 0.619
+  },
+  "eval_accuracy": 0.572,
+  "total_time_seconds": 895.5183775424957,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 111,
+    "fallback_rate": 0.017619047619047618,
+    "sample_unparseable": [
+      "politics (not in given categories)",
+      "politics (not in given categories, but closest",
+      "music industry (not listed in options)",
+      "politics (Note: Since politics often intersects",
+      "politics (not listed)",
+      "politics (not listed)",
+      "horse racing (not listed as an option)",
+      "politics (Note: Since politics is not an",
+      "politics (not in given categories, but closest",
+      "computer security (not listed in the categories)",
+      "politics",
+      "relationships",
+      "medicine (not in given categories)",
+      "piracy",
+      "politics",
+      "music industry (none of the given categories fit)",
+      "entertainment (not in given categories)",
+      "music/entertainment (not in the given",
+      "environment",
+      "politics",
+      "politics",
+      "politics",
+      "politics",
+      "politics",
+      "politics (Note: Since politics is not one",
+      "swim",
+      "politics",
+      "technology (not in the given categories)",
+      "technology (not listed in the categories)",
+      "environmental/conservation (not listed in"
+    ]
+  },
+  "variant": "fed_icl_free"
+}

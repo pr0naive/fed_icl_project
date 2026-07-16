@@ -1,0 +1,90 @@
+{
+  "config": {
+    "model": "llama3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 13,
+    "client_pool_size": 250
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.25
+    },
+    {
+      "round": 1,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 496.07365703582764
+    },
+    {
+      "round": 2,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 495.2630922794342
+    },
+    {
+      "round": 3,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 491.2932617664337
+    },
+    {
+      "round": 4,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 491.2606017589569
+    },
+    {
+      "round": 5,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 492.20738911628723
+    },
+    {
+      "round": 6,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 478.61859250068665
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.747,
+    "local_only": 0.757
+  },
+  "eval_accuracy": 0.711,
+  "total_time_seconds": 2944.7166650295258,
+  "parse_stats": {
+    "total_calls": 6300,
+    "fallback_count": 13,
+    "fallback_rate": 0.0020634920634920637,
+    "sample_unparseable": [
+      "entertainment",
+      "technology",
+      "politics",
+      "arts",
+      "none",
+      "entertainment",
+      "entertainment",
+      "technology",
+      "technology",
+      "entertainment",
+      "entertainment",
+      "politics",
+      "entertainment"
+    ]
+  },
+  "variant": "fed_icl_free"
+}
