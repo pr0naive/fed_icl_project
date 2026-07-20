@@ -6,7 +6,8 @@ import numpy as np
 from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
-    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, FED_VARIANT
+    NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, FED_VARIANT,
+    DATA_REGIME, FILTER_LOCAL_DATA
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -62,6 +63,11 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     server  = FedICLServer(server_queries)
     clients = [FedICLClient(k, client_datasets[k], model=MODEL_NAME)
                for k in range(NUM_CLIENTS)]
+    
+    if FILTER_LOCAL_DATA:
+        print("\n  -- Local dataset filtering (Wang et al., App. C.1) --")
+        for client in clients:
+            client.filter_local_data(server_queries, NUM_SHOTS)
 
     init_eval = server.evaluate_context()
     print(f"\n  Round 0 (random init): {init_eval['accuracy']:.1%}")
@@ -79,6 +85,9 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
             "order_strategy": ORDER_STRATEGY,
             "seed": SEED,
             "client_pool_size": CLIENT_POOL_SIZE,
+            "client_pool_actual": sum(len(cd) for cd in client_datasets),
+            "data_regime": DATA_REGIME,
+            "filter_local_data": FILTER_LOCAL_DATA,
         },
         "rounds": [{"round": 0, "accuracy": init_eval["accuracy"]}],
         "baselines": {},
@@ -130,7 +139,9 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     eval_accuracy = eval_correct / len(eval_set)
     print(f"  Held-out accuracy: {eval_accuracy:.1%} ({eval_correct}/{len(eval_set)})")
 
-    results["eval_accuracy"]      = eval_accuracy
+    results["in_sample_accuracy"] = results["rounds"][-1]["accuracy"]  # server queries, paper metric
+    results["eval_accuracy"]      = eval_accuracy                      # held-out
+    results["total_time_seconds"] = total_time
     results["total_time_seconds"] = total_time
     return results
 
@@ -156,10 +167,13 @@ def print_summary(results: dict):
     if "eval_accuracy" in results and results.get("baselines"):
         local_only = results["baselines"].get("local_only")
         if local_only is not None:
-            fed_final = results["rounds"][-1]["accuracy"]
-            fed_gain  = (fed_final - local_only) * 100
-            print(f"  Federation gain over local-only: {fed_gain:+.1f}pp "
-                  f"(local-only {local_only:.1%} → Fed-ICL R{NUM_ROUNDS} {fed_final:.1%})")
+            in_sample   = results.get("in_sample_accuracy", results["rounds"][-1]["accuracy"])
+            fed_heldout = results["eval_accuracy"]
+            gain = (fed_heldout - local_only) * 100        # matched: both held-out, n=EVAL_SIZE
+            print(f"  In-sample R{NUM_ROUNDS} (server queries, n={NUM_SERVER_QUERIES}): {in_sample:.1%}  <- paper's metric")
+            print(f"  Held-out  R{NUM_ROUNDS} (n={EVAL_SIZE}): {fed_heldout:.1%}")
+            print(f"  Local-only (n={EVAL_SIZE}): {local_only:.1%}")
+            print(f"  Federation gain (held-out - local, matched): {gain:+.1f}pp")
     if results.get("parse_stats"):
         ps = results["parse_stats"]
         print(f"\n  Parse fallback rate: {ps['fallback_rate']:.1%} "
@@ -176,6 +190,9 @@ def main():
 
     if not check_ollama_ready():
         sys.exit(1)
+
+    if DATA_REGIME == "split8020" and not FILTER_LOCAL_DATA:
+        sys.exit("split8020 without FILTER_LOCAL_DATA would trigger ~500k LLM calls; set FED_ICL_FILTER=1.")
 
     server_queries, client_datasets, eval_set = prepare_experiment()
 
@@ -196,6 +213,7 @@ def main():
         f"_K{NUM_CLIENTS}"
         f"_T{NUM_ROUNDS}"
         f"_pool{CLIENT_POOL_SIZE}"
+        f"_regime-{DATA_REGIME}_filter{int(FILTER_LOCAL_DATA)}"
         f"_seed{SEED}"
         f"_order-{ORDER_STRATEGY}.json"
     )
