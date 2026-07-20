@@ -6,7 +6,8 @@ Fed-ICL Replication — Data Module (v2 - Harder Task)
 import numpy as np
 from datasets import load_dataset
 from numpy.random import seed
-from config import (SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, EVAL_SEED)
+from config import (SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, EVAL_SEED,
+                    DATA_REGIME, SPLIT_SEED, TEST_FRACTION, QUERY_SEED)
 
 np.random.seed(SEED)
 
@@ -27,7 +28,8 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = _load_ag_news(num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
+RAW_DATA = None if DATA_REGIME == "split8020" else _load_ag_news(
+    num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed=EVAL_SEED):
     """Deterministic, class-balanced eval sample from the AG News TEST split.
@@ -99,9 +101,68 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
         np.random.shuffle(client_data[k])
     return client_data
 
+def _materialize(ds, idxs):
+    """Fast index -> (text, label) via ds.select (order preserved)."""
+    sub = ds.select([int(i) for i in idxs])
+    return list(zip(sub["text"], [_AG_NEWS_LABEL_MAP[l] for l in sub["label"]]))
+
+
+def _stratified_subset(labels, candidate_idx, n, num_classes, rng):
+    """Class-balanced draw of n indices restricted to candidate_idx."""
+    cand = np.asarray(candidate_idx)
+    cand_labels = labels[cand]
+    per, rem = divmod(n, num_classes)
+    chosen = []
+    for c in range(num_classes):
+        pool_c = cand[cand_labels == c]
+        k = per + (1 if c < rem else 0)
+        chosen.extend(rng.choice(pool_c, size=k, replace=False).tolist())
+    rng.shuffle(chosen)
+    return [int(i) for i in chosen]
+
+
+def _prepare_split8020():
+    """80/20 split of the 120k train split. 80% -> queries + Dirichlet pools; 20% -> eval."""
+    ds = load_dataset("fancyzhx/ag_news", split="train")
+    labels = np.array(ds["label"])
+    n = len(ds)
+    num_classes = len(LABEL_SPACE)
+
+    perm = np.random.default_rng(SPLIT_SEED).permutation(n)     # learn/test disjoint by construction
+    cut = int((1.0 - TEST_FRACTION) * n)
+    learn_idx, test_idx = perm[:cut], perm[cut:]
+
+    query_idx = _stratified_subset(labels, learn_idx, NUM_SERVER_QUERIES, num_classes,
+                                   np.random.default_rng(QUERY_SEED))
+    pool_idx = np.setdiff1d(learn_idx, np.array(query_idx))     # pool = learn minus queries
+
+    server_queries = _materialize(ds, query_idx)
+    client_pool    = _materialize(ds, pool_idx)
+
+    eval_idx = _stratified_subset(labels, test_idx, EVAL_SIZE, num_classes,
+                                  np.random.default_rng(EVAL_SEED))
+    eval_set = _materialize(ds, eval_idx)
+
+    client_datasets = partition_data_dirichlet(client_pool, NUM_CLIENTS, DIRICHLET_ALPHA)
+
+    print("=" * 60); print("DATA DISTRIBUTION SUMMARY  (regime=split8020)"); print("=" * 60)
+    print(f"  120k train -> learn {len(learn_idx)} / test {len(test_idx)}  (test_frac={TEST_FRACTION})")
+    print(f"  Server queries: {len(server_queries)} (stratified, QUERY_SEED={QUERY_SEED})")
+    print(f"  Client pool:    {len(client_pool)} (learn minus queries)")
+    print(f"  Eval:           {len(eval_set)} (stratified from the 20%, EVAL_SEED={EVAL_SEED})")
+    print(f"  Dirichlet alpha:{DIRICHLET_ALPHA}   partition SEED={SEED}")
+    for k, cd in enumerate(client_datasets):
+        counts = {l: sum(1 for _, lab in cd if lab == l) for l in LABEL_SPACE}
+        print(f"  Client {k}: {len(cd)} examples (" + ", ".join(f"{l}={counts[l]}" for l in LABEL_SPACE) + ")")
+    print("=" * 60)
+    return server_queries, client_datasets, eval_set
+
 
 def prepare_experiment():
+    if DATA_REGIME == "split8020":
+        return _prepare_split8020()
     data = RAW_DATA.copy()
+    # ... existing canonical body unchanged ...
     np.random.shuffle(data)
 
 # eval_set: AG News TEST split, fixed EVAL_SEED, class-balanced.
