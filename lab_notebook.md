@@ -1262,3 +1262,137 @@ the property the comparison needs. Then: smoke run at EVAL=100 on the GPU
 box, per-model call timing, launch the fixed-protocol 5-seed x 3-model
 grid (~6,300 LLM calls per run; zero-shot baseline computed once per model
 since it is deterministic at temperature 0 on a fixed eval set).
+
+---
+
+### 2026-07-14 Grid complete; federation "gain" was an in-sample artifact
+
+**Run.** Fixed-protocol 5-seed x 3-model grid completed on mcrugcomp03
+(seeds 3/7/13/42/99; phi3/mistral/llama3; alpha=0.5, K=3, T=6, pool=250,
+eval=1000, similarity_embedding, variant=fed_icl). 15/15 clean, 0
+failures, mean parse fallback 1.4% (max 3.0%, mistral). Results
+force-added past the results_*.json ignore and committed.
+
+**Verdict.** The plotted "federation gain" was R6 - local_only. R6 is
+`evaluate_context` scored on the 100 shared-context queries the federation
+relabels: an in-sample fit number. local_only is on the 1000 held-out set.
+The two are not comparable. Redefined gain as eval_accuracy - local_only,
+both held-out n=1000. On the fair metric federation beats local in 6/15
+conditions and hurts in 9/15; with a +/-2pp noise floor (SE of a held-out
+difference at n=1000) that is 3 real gains, 7 real losses, 5 within noise.
+Per-model mean held-out gain: phi3 -1.4pp, mistral -2.5pp, llama3 +0.9pp.
+The all-positive heatmap from the first pass (+3 to +18pp) was the artifact
+of comparing R6@100 against local@1000. At alpha=0.5 Fed-ICL does not
+reliably beat a single strong client's local pool. This depends on
+eval-fix-v1: without the decoupled fixed eval the held-out number itself
+would not be trustworthy.
+
+**Pattern.** Five mechanisms, all evidenced from the 15 runs.
+1. R6 overstates held-out by 9.4pp on average (range 5.6 to 16.0), every
+   run. Arithmetic reason the first figures looked positive.
+2. Label noise: the shared context carries pseudo-labels 66-83% correct
+   (= R6), so 17-34% of demonstrations are mislabelled; local_only uses
+   250 true-labelled examples.
+3. Pool size: federated pool 100 vs local 250, so kNN draws from a thinner
+   candidate set. Compounds (2). Separable with a 100-example local
+   control.
+4. The rounds hill-climb on in-sample agreement: R6 rises ~21% -> ~80%
+   across T=6 while held-out sits 9pp below and is measured once.
+5. Gain sign is set by local baseline volatility, not federation.
+   local_only across-seed std is ~2x federated held-out std (phi3 2.2 vs
+   1.0, mistral 2.1 vs 0.9, llama3 3.5 vs 1.5). Federation is
+   partition-robust at a mediocre level; local swings with the client-0
+   draw. llama3 seed7 local=66.7 (bad draw) -> gain +8.7; seed3 local=76.3
+   (good draw) -> gain -4.2; federated held-out barely moved (75.4 vs
+   72.1). This reframes the earlier "seed dominates direction of gain":
+   the seed dominates the local baseline, and gain inherits its variance.
+
+Model-strength interaction: llama3 (zero-shot 74.7) has held-out below its
+own zero-shot for 4/5 seeds (noisy context worse than its priors); phi3
+(zero-shot 53) beats zero-shot for all 5 seeds but still loses to local in
+3/5. Federation's value falls as base-model quality rises. Parse fallback
+ruled out as a driver (1.4% mean, too small for 5pp gaps).
+
+**Decision.** plot_analysis.py gain redefined to held-out throughout;
+heatmap, scatter, and distribution repointed to held-out; round-trajectory
+plot relabelled as a shared-context convergence diagnostic (not
+generalization). Two figures added: 05_insample_gap (the ~9pp fall from R6
+to held-out) and 06_partition_stability (local vs federated across-seed
+spread). All six regenerate from one script run.
+
+**Pending / open for supervision (Dr. Jin).**
+1. Baseline definition: is federated 100-pseudo pool vs local 250-true
+   pool the agreed fair comparison, or control for pool size? Her call,
+   the whole result turns on it.
+2. Pool-size control run (100-example local) cleanly separates label-noise
+   from pool-size effects; queued pending (1).
+3. Reframing: ordering-under-heterogeneity experiments should be run and
+   reported on held-out. The sharper question is whether demonstration
+   ordering recovers any generalization the noisy federated pool loses,
+   which is a more original contribution than ordering effects on a metric
+   that was flattering the method.
+
+   ---
+
+### 2026-07-16 Both grids done; metric correction; pool-size confound
+
+**Run.** Fed-ICL (full) and Fed-ICL-Free grids complete on comp03, 15/15
+each, 0 failures, mean parse fallback 1.4%. Same fixed protocol
+(alpha=0.5, K=3, T=6, pool=250, queries=100, eval=1000, order=original,
+seeds 3/7/13/42/99 x phi3/mistral/llama3). All 30 result JSONs pushed.
+
+**Verdict.** Plotted "gain" was R6 - local_only. R6 is accuracy on the
+federation's own 100 shared queries (in-sample); local_only is held-out
+n=1000. Not comparable. R6 overstates held-out by 9.4pp mean (5.6-16.0),
+every run. Redefined gain as eval_accuracy - local_only, both held-out
+n=1000. On the fair metric federation helps 6/15, hurts 9/15; with a
++/-2pp noise floor, 3 real gains, 7 real losses, 5 within noise. Per-model
+mean gain: phi3 -1.4pp, mistral -2.5pp, llama3 +0.9pp. At alpha=0.5
+federation does not reliably beat client 0's local pool. The earlier
+all-positive heatmap was the R6 artifact.
+
+**Free vs Full.** Paired free - full = -0.65pp held-out, worse in 10/15,
+t(14) = -2.01, p = 0.064. Directionally as predicted (Free drops
+true-label anchoring, mean R6 75.5 vs 77.0) but within noise at n=15. Free
+does not rescue the result (helps 4/15 vs Full's 6/15). Conclusion holds
+under both variants. Protocol check: zero-shot and local-only identical
+across variants, clean paired comparison.
+
+**Pattern: client 0 is a moving target.** CLIENT_POOL_SIZE=250 is the
+total across 3 clients, not per-client. Client 0's actual share varies
+4.4x by seed: seed7=28, seed3=91, seed13=101, seed42=113, seed99=123, and
+class coverage varies with it (seed7: world1/sports2/business7/science18;
+seed13: world40/sports1/business59/science1). Within-model, bigger pool
+tends to lift local-only (r approx +0.43 phi3, +0.51 mistral, +0.53
+llama3). Federation gain vs pool size: r = -0.46 (federation helps more
+when client 0 got less data). But size and class coverage co-vary, so at
+n=15 the two cannot be separated. Earlier guess that smallest pool (seed7)
+gives the weakest local for every model is FALSE: true for llama3 only;
+phi3 and mistral are weakest at seed13 (101 examples).
+
+**Correction to the record.** The old "seed determines direction of gain
+(7/99 help, 3/13 hurt)" finding does not survive. It was an eval-coupling
+artifact: pre-fix eval used rng(seed+1) at n=100, coupling partition seed
+to eval class-tilt. eval-fix-v1 decoupled and balanced it (fixed
+EVAL_SEED, n=1000, class-balanced) and the pattern vanished. The one
+robust signal is the model-capability interaction, now replicated across
+both variants: llama3 (zero-shot 74.7) held-out below its own zero-shot in
+4/5 seeds; phi3 (53.1) above zero-shot in 5/5.
+
+**Ruled out.** Parse fallback (1.4% mean). Pool size as sole driver
+(within-model r only ~0.5).
+
+**Decision.** plot_analysis.py gain redefined to held-out; heatmap,
+scatter, distribution repointed; round-trajectory relabelled as a
+convergence diagnostic; figs 05 (in-sample gap) and 06 (partition
+stability) added; heatmap caption and fig06 y-limits fixed.
+
+**Pending / open for supervision (Dr. Jin).**
+1. Baseline definition: federated 100 pseudo-labelled (near-balanced) vs
+   client 0's variable true-labelled pool (skewed). Fair? The result turns
+   on it.
+2. Pool-size control run: fix client 0's pool size across seeds to break
+   the size/coverage confound and isolate what drives the local baseline.
+   ~10-20h.
+3. 80/20: confirm Reading B (canonical splits as sampling frames, no
+   literal ratio), or require the literal split (re-run both grids).
