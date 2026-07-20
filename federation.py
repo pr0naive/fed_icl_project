@@ -59,6 +59,28 @@ class FedICLClient:
         self.local_data = local_data
         self.model = model
         self.relabelled_data = None
+    
+    def filter_local_data(self, server_queries: list, num_context: int = None):
+        """One-time local dataset filtering (Wang et al., App. C.1, Algorithm 2).
+
+        Keep, per server query, its C nearest neighbours in the local pool
+        (cached paraphrase-MiniLM-L6-v2 cosine), union across queries, and RESET
+        local_data to that subset. Per-round cost then O(M*C), not O(N).
+        No-op when the pool is already <= C.
+        """
+        C = NUM_SHOTS if num_context is None else num_context
+        if len(self.local_data) <= C:
+            return
+        before = len(self.local_data)
+        pool_vecs  = _embed([t for t, _ in self.local_data])
+        query_vecs = _embed([q for q, _ in server_queries])
+        keep = set()
+        for qv in query_vecs:
+            scores = pool_vecs @ qv
+            idx = np.argpartition(scores, -C)[-C:]      # O(N)
+            keep.update(int(i) for i in idx)
+        self.local_data = [self.local_data[i] for i in sorted(keep)]
+        print(f"  Client {self.client_id}: filtered {before} -> {len(self.local_data)}")
 
     def select_examples(self, query_text: str, pool: list, n: int) -> list:
         if len(pool) <= n:
