@@ -65,3 +65,8 @@ FILTER_LOCAL_DATA  = os.environ.get("FED_ICL_FILTER", "0") == "1"
 
 STRATIFIED_QUERIES = os.environ.get("FED_ICL_STRAT_QUERIES", "0") == "1"
 QUERY_SEED         = int(os.environ.get("FED_ICL_QUERY_SEED", 12345))
+
+# Filter breadth C: neighbours kept per query in Algorithm 2. Defaults to NUM_SHOTS,
+# so it stays coupled to the paper's single C (=3) until the C sweep is confirmed.
+# Set FED_ICL_FILTER_C=5 or 10 to widen the filter independently of the prompt.
+FILTER_C = int(os.environ.get("FED_ICL_FILTER_C", NUM_SHOTS))

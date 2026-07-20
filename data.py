@@ -28,7 +28,7 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = None if DATA_REGIME == "split8020" else _load_ag_news(
+RAW_DATA = None if DATA_REGIME in ("split8020", "canonical_full") else _load_ag_news(
     num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed=EVAL_SEED):
@@ -158,11 +158,43 @@ def _prepare_split8020():
     return server_queries, client_datasets, eval_set
 
 
+def _prepare_canonical_full():
+    """Meeting regime: the FULL 120k train is Dirichlet-partitioned across clients;
+       server queries and held-out eval are both drawn from the 7.6k TEST split, disjoint."""
+    train_ds = load_dataset("fancyzhx/ag_news", split="train")
+    test_ds  = load_dataset("fancyzhx/ag_news", split="test")
+    test_labels = np.array(test_ds["label"])
+    num_classes = len(LABEL_SPACE)
+
+    client_pool = _materialize(train_ds, range(len(train_ds)))          # entire 120k train
+    client_datasets = partition_data_dirichlet(client_pool, NUM_CLIENTS, DIRICHLET_ALPHA)
+
+    query_idx = _stratified_subset(test_labels, np.arange(len(test_ds)),
+                                   NUM_SERVER_QUERIES, num_classes, np.random.default_rng(QUERY_SEED))
+    remaining = np.setdiff1d(np.arange(len(test_ds)), np.array(query_idx))
+    eval_idx  = _stratified_subset(test_labels, remaining,
+                                   EVAL_SIZE, num_classes, np.random.default_rng(EVAL_SEED))
+    server_queries = _materialize(test_ds, query_idx)
+    eval_set       = _materialize(test_ds, eval_idx)
+
+    print("=" * 60); print("DATA DISTRIBUTION SUMMARY  (regime=canonical_full)"); print("=" * 60)
+    print(f"  Client pools: full {len(train_ds)} train partitioned across {NUM_CLIENTS} clients")
+    print(f"  Server queries: {len(server_queries)} from TEST (QUERY_SEED={QUERY_SEED})")
+    print(f"  Held-out eval:  {len(eval_set)} from TEST (EVAL_SEED={EVAL_SEED}), disjoint from queries")
+    print(f"  Dirichlet alpha: {DIRICHLET_ALPHA}   partition SEED={SEED}")
+    for k, cd in enumerate(client_datasets):
+        counts = {l: sum(1 for _, lab in cd if lab == l) for l in LABEL_SPACE}
+        print(f"  Client {k}: {len(cd)} (" + ", ".join(f"{l}={counts[l]}" for l in LABEL_SPACE) + ")")
+    print("=" * 60)
+    return server_queries, client_datasets, eval_set
+
+
 def prepare_experiment():
+    if DATA_REGIME == "canonical_full":
+        return _prepare_canonical_full()
     if DATA_REGIME == "split8020":
         return _prepare_split8020()
     data = RAW_DATA.copy()
-    # ... existing canonical body unchanged ...
     np.random.shuffle(data)
 
 # eval_set: AG News TEST split, fixed EVAL_SEED, class-balanced.

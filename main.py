@@ -7,7 +7,7 @@ from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
     NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, FED_VARIANT,
-    DATA_REGIME, FILTER_LOCAL_DATA
+    DATA_REGIME, FILTER_LOCAL_DATADATA_REGIME, FILTER_LOCAL_DATA, FILTER_C
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -32,12 +32,14 @@ def run_baseline_zero_shot(eval_set: list) -> float:
     return accuracy
 
 
-def run_baseline_local_only(client_datasets: list, eval_set: list) -> float:
+def run_baseline_local_only(client_datasets: list, eval_set: list, server_queries: list = None) -> float:
     """Client 0's local pool only, with the SAME select+order pipeline as Fed-ICL."""
     print("\n" + "=" * 60)
     print(f"BASELINE: Local-Only (Client 0; ORDER_STRATEGY={ORDER_STRATEGY})")
     print("=" * 60)
     client = FedICLClient(client_id=0, local_data=client_datasets[0], model=MODEL_NAME)
+    if FILTER_LOCAL_DATA and server_queries is not None:
+        client.filter_local_data(server_queries, FILTER_C)   # paper-faithful: baseline uses the filtered pool too
     correct = 0
     for i, (text, true_label) in enumerate(eval_set):
         examples = client.select_examples(text, client.local_data, NUM_SHOTS)
@@ -67,7 +69,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     if FILTER_LOCAL_DATA:
         print("\n  -- Local dataset filtering (Wang et al., App. C.1) --")
         for client in clients:
-            client.filter_local_data(server_queries, NUM_SHOTS)
+            client.filter_local_data(server_queries, FILTER_C)
 
     init_eval = server.evaluate_context()
     print(f"\n  Round 0 (random init): {init_eval['accuracy']:.1%}")
@@ -88,6 +90,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
             "client_pool_actual": sum(len(cd) for cd in client_datasets),
             "data_regime": DATA_REGIME,
             "filter_local_data": FILTER_LOCAL_DATA,
+            "filter_c": FILTER_C,
         },
         "rounds": [{"round": 0, "accuracy": init_eval["accuracy"]}],
         "baselines": {},
@@ -198,7 +201,7 @@ def main():
 
     print("\nRunning baselines first...")
     zero_shot_acc  = run_baseline_zero_shot(eval_set)
-    local_only_acc = run_baseline_local_only(client_datasets, eval_set)
+    local_only_acc = run_baseline_local_only(client_datasets, eval_set, server_queries)
 
     results = run_fed_icl(server_queries, client_datasets, eval_set)
     results["baselines"]   = {"zero_shot": zero_shot_acc, "local_only": local_only_acc}
@@ -213,7 +216,7 @@ def main():
         f"_K{NUM_CLIENTS}"
         f"_T{NUM_ROUNDS}"
         f"_pool{CLIENT_POOL_SIZE}"
-        f"_regime-{DATA_REGIME}_filter{int(FILTER_LOCAL_DATA)}"
+        f"_regime-{DATA_REGIME}_filter{int(FILTER_LOCAL_DATA)}_C{FILTER_C}"
         f"_seed{SEED}"
         f"_order-{ORDER_STRATEGY}.json"
     )
