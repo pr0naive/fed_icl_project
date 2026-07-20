@@ -50,3 +50,18 @@ EVAL_SEED = int(os.environ.get("FED_ICL_EVAL_SEED", 12345))      # FIXED, decoup
 
 # Random Seed 
 SEED = int(os.environ.get("FED_ICL_SEED", 42))
+
+
+# --- One-seed 80/20 run (Dr. Jin) + paper-faithful filtering ------------------
+# "canonical"  train split = pool/query frame, test split = eval (DEFAULT)
+# "split8020"  80% of the 120k train -> clients, 20% -> eval; queries off the 80%
+DATA_REGIME   = os.environ.get("FED_ICL_REGIME", "canonical")
+SPLIT_SEED    = int(os.environ.get("FED_ICL_SPLIT_SEED", 2024))   # fixes the 80/20 split
+TEST_FRACTION = float(os.environ.get("FED_ICL_TEST_FRAC", 0.2))
+
+# Paper's one-time local dataset filtering (Wang et al., App. C.1, Algorithm 2).
+# OFF by default. REQUIRED for split8020, else relabelling is ~576k LLM calls.
+FILTER_LOCAL_DATA  = os.environ.get("FED_ICL_FILTER", "0") == "1"
+
+STRATIFIED_QUERIES = os.environ.get("FED_ICL_STRAT_QUERIES", "0") == "1"
+QUERY_SEED         = int(os.environ.get("FED_ICL_QUERY_SEED", 12345))
