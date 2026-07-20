@@ -1396,3 +1396,35 @@ stability) added; heatmap caption and fig06 y-limits fixed.
    ~10-20h.
 3. 80/20: confirm Reading B (canonical splits as sampling frames, no
    literal ratio), or require the literal split (re-run both grids).
+
+### 20/07/2026 Supervision meeting outcomes and canonical_full regime 
+
+**Meeting.** Dr. Jin settled the five open decisions. Server queries now come from
+the 7.6k test split, not train. Filter confirmed, applied the paper's way, and she
+asked to sweep the filter breadth to 5 and 10 to reach farther examples (this maps
+to C in Algorithm 2, clarification emailed since "farther" and "fewer" conflict).
+Local-only to be filtered like the clients. Held-out is the headline metric. The
+7.6k test is for testing and the full 120k train for learning, so the 80/20 slicing
+is dropped.
+
+**Also agreed.** Compare all three models at seed 42 under this regime, tested on
+the 7.6k. Try DBpedia on one seed to see how more classes behave. Once the
+three-model 80/20-style results are in, add a subsection to the report as a
+contribution, since the paper never varies pool size.
+
+**Code.** New DATA_REGIME=canonical_full: full 120k train Dirichlet-partitioned
+across clients; queries and eval drawn as disjoint stratified samples from the 7.6k
+test. Local-only baseline now filtered via Algorithm 2 before scoring. FILTER_C
+added, defaulting to NUM_SHOTS (3), so C is wired for the sweep but unchanged for
+now. Runaway guard and filename tag (_C{FILTER_C}) extended to cover the new regime.
+All four modules compile.
+
+**Watch.** This is a fair re-test of the no-op, not a re-parameterisation. Filtering
+local-only removes its whole-pool advantage, so it should drop and the gain may move
+up, possibly positive. Do not carry the -0.2 expectation into these runs. The full
+120k makes clients even more data-rich while filtering local-only pushes the other
+way, so the net is empirical.
+
+**Pending.** Dr. Jin's reply on C direction and coupling (filter breadth vs prompt
+length). C sweep held until then. DBpedia to be branched, not merged, until she
+confirms Wednesday.
