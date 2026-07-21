@@ -7,12 +7,21 @@ import numpy as np
 from datasets import load_dataset
 from numpy.random import seed
 from config import (SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, EVAL_SEED,
-                    DATA_REGIME, SPLIT_SEED, TEST_FRACTION, QUERY_SEED)
+                    DATA_REGIME, SPLIT_SEED, TEST_FRACTION, QUERY_SEED, DATASET, POOL_CAP)
 
 np.random.seed(SEED)
 
-LABEL_SPACE = ["world", "sports", "business", "science"]
-_AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
+if DATASET == "dbpedia":
+    LABEL_SPACE = ["company", "school", "artist", "athlete", "politician", "transport",
+                   "building", "nature", "village", "animal", "plant", "album", "film", "book"]
+    _AG_NEWS_LABEL_MAP = {i: LABEL_SPACE[i] for i in range(len(LABEL_SPACE))}
+    _HF_NAME = "fancyzhx/dbpedia_14"
+    _TEXT_FIELDS = ("title", "content")      # joined into one text
+else:
+    LABEL_SPACE = ["world", "sports", "business", "science"]
+    _AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
+    _HF_NAME = "fancyzhx/ag_news"
+    _TEXT_FIELDS = ("text",)
 
 
 
@@ -28,7 +37,7 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = None if DATA_REGIME in ("split8020", "canonical_full") else _load_ag_news(
+RAW_DATA = None if (DATA_REGIME in ("split8020", "canonical_full") or DATASET == "dbpedia") else _load_ag_news(
     num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed=EVAL_SEED):
@@ -104,7 +113,12 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
 def _materialize(ds, idxs):
     """Fast index -> (text, label) via ds.select (order preserved)."""
     sub = ds.select([int(i) for i in idxs])
-    return list(zip(sub["text"], [_AG_NEWS_LABEL_MAP[l] for l in sub["label"]]))
+    if len(_TEXT_FIELDS) == 1:
+        texts = list(sub[_TEXT_FIELDS[0]])
+    else:
+        cols = [sub[f] for f in _TEXT_FIELDS]
+        texts = [" ".join(str(cols[j][i]) for j in range(len(_TEXT_FIELDS))) for i in range(len(sub))]
+    return list(zip(texts, [_AG_NEWS_LABEL_MAP[l] for l in sub["label"]]))
 
 
 def _stratified_subset(labels, candidate_idx, n, num_classes, rng):
@@ -166,7 +180,12 @@ def _prepare_canonical_full():
     test_labels = np.array(test_ds["label"])
     num_classes = len(LABEL_SPACE)
 
-    client_pool = _materialize(train_ds, range(len(train_ds)))          # entire 120k train
+    client_pool = _materialize(train_ds, range(len(train_ds)))
+    if POOL_CAP > 0 and len(client_pool) > POOL_CAP:                     # scale-matched cross-dataset runs
+        pl = np.array([get_label_id(lab) for _, lab in client_pool])
+        keep = _stratified_subset(pl, np.arange(len(client_pool)), POOL_CAP, num_classes,
+                                  np.random.default_rng(SEED))
+        client_pool = [client_pool[i] for i in keep]
     client_datasets = partition_data_dirichlet(client_pool, NUM_CLIENTS, DIRICHLET_ALPHA)
 
     query_idx = _stratified_subset(test_labels, np.arange(len(test_ds)),
@@ -178,7 +197,8 @@ def _prepare_canonical_full():
     eval_set       = _materialize(test_ds, eval_idx)
 
     print("=" * 60); print("DATA DISTRIBUTION SUMMARY  (regime=canonical_full)"); print("=" * 60)
-    print(f"  Client pools: full {len(train_ds)} train partitioned across {NUM_CLIENTS} clients")
+    print(f"  Dataset: {DATASET} ({_HF_NAME}), {len(LABEL_SPACE)} classes")
+    print(f"  Client pools: {len(client_pool)} of {len(train_ds)} train partitioned across {NUM_CLIENTS} clients")
     print(f"  Server queries: {len(server_queries)} from TEST (QUERY_SEED={QUERY_SEED})")
     print(f"  Held-out eval:  {len(eval_set)} from TEST (EVAL_SEED={EVAL_SEED}), disjoint from queries")
     print(f"  Dirichlet alpha: {DIRICHLET_ALPHA}   partition SEED={SEED}")
@@ -190,10 +210,10 @@ def _prepare_canonical_full():
 
 
 def prepare_experiment():
+    if DATASET == "dbpedia" and DATA_REGIME != "canonical_full":
+        raise SystemExit("DBpedia is only wired for FED_ICL_REGIME=canonical_full.")
     if DATA_REGIME == "canonical_full":
         return _prepare_canonical_full()
-    if DATA_REGIME == "split8020":
-        return _prepare_split8020()
     data = RAW_DATA.copy()
     np.random.shuffle(data)
 
