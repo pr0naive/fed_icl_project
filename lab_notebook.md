@@ -1428,3 +1428,30 @@ way, so the net is empirical.
 **Pending.** Dr. Jin's reply on C direction and coupling (filter breadth vs prompt
 length). C sweep held until then. DBpedia to be branched, not merged, until she
 confirms Wednesday.
+
+## 21/07/2026 C-sweep on canonical_full, three models, seed 42 
+
+**Run.** canonical_full, full 120k partitioned, queries+eval from 7.6k test,
+local-only filtered like clients, held-out headline. C in {3,5,10}, coupled
+(C sets both filter breadth and prompt length, per Dr. Jin). One seed.
+
+**Result (held-out gain, pp).**
+  llama3   -0.4 / +1.2 / +3.6   (C=3/5/10)
+  mistral  +5.0 / +5.3 / +6.3
+  phi3     +5.4 / +3.7 / +0.9
+
+**Verdict.** C affects gain, non-monotonically across capability.
+- llama3: gain rises but only because local-only falls (74.6->69.4); held flat
+  ~73-75. Wider filter dilutes the baseline's prompt; not a federation gain.
+- mistral: gain rises for the right reason. Local flat (68.0->68.8), held climbs
+  (73.0->75.1). The model has capacity to use more/farther context.
+- phi3: gain collapses. Both local and held fall, held faster (58.7->52.6). A
+  3.8B model is overwhelmed by 10 diverse demonstrations; C hurts it.
+
+**Reading.** Capability decides whether more C is signal or noise: strong model
+near ceiling (no room), mid model benefits, weak model degrades. Best gain per
+model at different C (llama3 C=10 but baseline-driven, mistral C=10 genuine,
+phi3 C=3).
+
+**Caveats.** One seed; sign/size swung across seeds at pool 250, treat as trend.
+In-sample noisy via the 100-slot channel (mistral 82/85/82), quote held-out only.
