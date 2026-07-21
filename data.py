@@ -111,14 +111,14 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
     return client_data
 
 def _materialize(ds, idxs):
-    """Fast index -> (text, label) via ds.select (order preserved)."""
+    """Index -> (text, label). Reads rows directly, so it is robust across
+    datasets versions and to single- or multi-field text."""
     sub = ds.select([int(i) for i in idxs])
-    if len(_TEXT_FIELDS) == 1:
-        texts = list(sub[_TEXT_FIELDS[0]])
-    else:
-        cols = [sub[f] for f in _TEXT_FIELDS]
-        texts = [" ".join(str(cols[j][i]) for j in range(len(_TEXT_FIELDS))) for i in range(len(sub))]
-    return list(zip(texts, [_AG_NEWS_LABEL_MAP[l] for l in sub["label"]]))
+    out = []
+    for row in sub:
+        text = " ".join(str(row[f]) for f in _TEXT_FIELDS)
+        out.append((text, _AG_NEWS_LABEL_MAP[row["label"]]))
+    return out
 
 
 def _stratified_subset(labels, candidate_idx, n, num_classes, rng):
