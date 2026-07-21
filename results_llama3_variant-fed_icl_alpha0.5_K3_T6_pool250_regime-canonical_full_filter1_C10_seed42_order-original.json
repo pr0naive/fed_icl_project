@@ -1,0 +1,112 @@
+{
+  "config": {
+    "model": "llama3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 10,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 10
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.26
+    },
+    {
+      "round": 1,
+      "accuracy": 0.77,
+      "correct": 77,
+      "total": 100,
+      "time_seconds": 2181.1002447605133
+    },
+    {
+      "round": 2,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 2185.4441764354706
+    },
+    {
+      "round": 3,
+      "accuracy": 0.75,
+      "correct": 75,
+      "total": 100,
+      "time_seconds": 2173.4442241191864
+    },
+    {
+      "round": 4,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 2180.106389284134
+    },
+    {
+      "round": 5,
+      "accuracy": 0.77,
+      "correct": 77,
+      "total": 100,
+      "time_seconds": 2179.607125043869
+    },
+    {
+      "round": 6,
+      "accuracy": 0.77,
+      "correct": 77,
+      "total": 100,
+      "time_seconds": 2188.1234822273254
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.767,
+    "local_only": 0.694
+  },
+  "in_sample_accuracy": 0.77,
+  "eval_accuracy": 0.73,
+  "total_time_seconds": 13087.825702667236,
+  "parse_stats": {
+    "total_calls": 22200,
+    "fallback_count": 48,
+    "fallback_rate": 0.002162162162162162,
+    "sample_unparseable": [
+      "technology",
+      "politics",
+      "politics",
+      "none",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "politics",
+      "entertainment",
+      "arts",
+      "design",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "education",
+      "travel",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "entertainment"
+    ]
+  },
+  "variant": "fed_icl"
+}
