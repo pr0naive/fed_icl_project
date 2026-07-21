@@ -175,8 +175,8 @@ def _prepare_split8020():
 def _prepare_canonical_full():
     """Meeting regime: the FULL 120k train is Dirichlet-partitioned across clients;
        server queries and held-out eval are both drawn from the 7.6k TEST split, disjoint."""
-    train_ds = load_dataset("fancyzhx/ag_news", split="train")
-    test_ds  = load_dataset("fancyzhx/ag_news", split="test")
+    train_ds = load_dataset(_HF_NAME, split="train")
+    test_ds  = load_dataset(_HF_NAME, split="test")
     test_labels = np.array(test_ds["label"])
     num_classes = len(LABEL_SPACE)
 
