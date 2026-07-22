@@ -218,8 +218,10 @@ def main():
         f"_T{NUM_ROUNDS}"
         f"_pool{CLIENT_POOL_SIZE}"
         f"_regime-{DATA_REGIME}_filter{int(FILTER_LOCAL_DATA)}_C{FILTER_C}"
+        f"_{DATASET}"
         f"_seed{SEED}"
         f"_order-{ORDER_STRATEGY}.json"
+        
     )
     with open(out_path, "w") as f:
         results["variant"] = FED_VARIANT
