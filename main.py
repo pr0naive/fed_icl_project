@@ -7,7 +7,7 @@ from config import (
     NUM_CLIENTS, NUM_ROUNDS, DIRICHLET_ALPHA, NUM_SHOTS,
     SELECTION_STRATEGY, ORDER_STRATEGY, MODEL_NAME, SEED,
     NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, FED_VARIANT,
-    DATA_REGIME, FILTER_LOCAL_DATA, FILTER_C
+    DATA_REGIME, FILTER_LOCAL_DATA, FILTER_C, DATASET
 )
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
@@ -91,6 +91,7 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
             "data_regime": DATA_REGIME,
             "filter_local_data": FILTER_LOCAL_DATA,
             "filter_c": FILTER_C,
+            "dataset": DATASET,
         },
         "rounds": [{"round": 0, "accuracy": init_eval["accuracy"]}],
         "baselines": {},
