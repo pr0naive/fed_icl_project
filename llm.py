@@ -8,20 +8,22 @@ Updated for 4-class news topic classification.
 import requests
 import re
 import time
-from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS
+from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS, DATASET
 from data import LABEL_SPACE
 
 _PARSE_STATS = {"total": 0, "fallback": 0, "examples": []}
 
 def build_icl_prompt(examples: list, query_text: str) -> str:
+    labels = ", ".join(f'"{l}"' for l in LABEL_SPACE)
+    noun  = "text" if DATASET == "dbpedia" else "news headline"
+    field = "Text" if DATASET == "dbpedia" else "Headline"
     prompt = (
-        "Classify the following news headline into exactly one of these categories: "
-        "\"world\", \"sports\", \"business\", or \"science\". "
+        f"Classify the following {noun} into exactly one of these categories: {labels}. "
         "Reply with only the category label, nothing else.\n\n"
     )
     for text, label in examples:
-        prompt += f"Headline: \"{text}\"\nCategory: {label}\n\n"
-    prompt += f"Headline: \"{query_text}\"\nCategory:"
+        prompt += f'{field}: "{text}"\nCategory: {label}\n\n'
+    prompt += f'{field}: "{query_text}"\nCategory:'
     return prompt
 
 def query_ollama(prompt: str, model: str = None, max_retries: int = 2) -> str:

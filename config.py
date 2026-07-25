@@ -70,3 +70,8 @@ QUERY_SEED         = int(os.environ.get("FED_ICL_QUERY_SEED", 12345))
 # so it stays coupled to the paper's single C (=3) until the C sweep is confirmed.
 # Set FED_ICL_FILTER_C=5 or 10 to widen the filter independently of the prompt.
 FILTER_C = int(os.environ.get("FED_ICL_FILTER_C", NUM_SHOTS))
+
+# Dataset switch: "agnews" (default) or "dbpedia" (14-class). DBpedia runs only in
+# the canonical_full regime. POOL_CAP caps the learning pool (0 = full train).
+DATASET  = os.environ.get("FED_ICL_DATASET", "agnews")
+POOL_CAP = int(os.environ.get("FED_ICL_POOL_CAP", 0))

@@ -1429,6 +1429,7 @@ way, so the net is empirical.
 length). C sweep held until then. DBpedia to be branched, not merged, until she
 confirms Wednesday.
 
+
 ## 21/07/2026 C-sweep on canonical_full, three models, seed 42 
 
 **Run.** canonical_full, full 120k partitioned, queries+eval from 7.6k test,
@@ -1455,3 +1456,70 @@ phi3 C=3).
 
 **Caveats.** One seed; sign/size swung across seeds at pool 250, treat as trend.
 In-sample noisy via the 100-slot channel (mistral 82/85/82), quote held-out only.
+
+## DBpedia three-model comparison, C=3, seed 42 (22 July)
+
+**Run.** canonical_full, DBpedia (14-class), pool capped 120k to match AG News
+scale, queries+eval from DBpedia test, local-only filtered, C=3, held-out headline.
+Dataset now stamped in config. One seed.
+
+**Result (held-out gain vs local, pp).**
+              AG News        DBpedia
+           local  gain    local  gain
+  llama3    74.6  -0.4     92.9  -1.8
+  mistral   68.0  +5.0     91.6  -1.5
+  phi3      53.3  +5.4     81.9  -2.2
+
+**Verdict.** Federation helped the weaker models on AG News (+5) and hurts all
+three on DBpedia (-1.5 to -2.2). Class count went UP, gain went DOWN. The driver
+is baseline headroom, not class count: DBpedia's cleanly separable categories let
+even phi3 reach ~82-92% local-only, removing the headroom that made AG News gains
+possible. On both datasets, gain tracks how much room local-only leaves.
+
+**Reading.** Strongest confirmation yet of the headroom mechanism, precisely
+because it is counterintuitive (more classes, less gain). Consistent with every
+prior result: pool 250 vs 96k, filtered vs unfiltered baseline, now AG News vs
+DBpedia.
+
+**Caveats.** DBpedia changes class count AND difficulty together; result attributed
+to difficulty/headroom, but the two are not fully separable from two datasets
+(limitations note). In-sample inflated by 100-query channel (phi3 91 vs held 80);
+quote held-out. One seed.
+
+**Next.** DBpedia C=5/10 running (real DBpedia this time). Multi-seed check still
+the load-bearing follow-up for effect sizes.
+
+## DBpedia C-sweep, three models, seed 42 (25 July)
+
+**Run.** canonical_full, DBpedia 14-class, pool 120k, filtered baseline, C in
+{3,5,10} coupled, held-out headline, dataset-stamped filenames. One seed.
+
+**Result (held-out gain vs local, pp).**
+              C=3    C=5    C=10
+  llama3     -1.8   -0.7   -1.2
+  mistral    -1.5   -2.3   -1.8
+  phi3       -2.2   -2.1   VOID
+phi3 C=10 void: 45.3% parse failure, held-out 1.3% (below 14-class random),
+gain -85 is an artifact not a result.
+
+**Verdict.**
+1. All valid DBpedia gains negative and flat across C (-0.7 to -2.3). Unlike
+   AG News, where C mattered (llama3 rose, phi3 fell), C is inert on DBpedia.
+   Reason: local-only is 82-93% (saturated), no headroom, so widening the filter
+   cannot open a gap. The effect of C is itself contingent on headroom.
+2. phi3 breaks at C=10 on DBpedia: 10 long Wikipedia demonstrations exceed a 3.8B
+   model's capacity to emit parseable labels (45% fail). Elevated parse rate for
+   phi3 even at C=3/5 (~6%) shows it was already straining. A capability ceiling,
+   not a gain.
+
+**Reading.** Consistent with the headroom mechanism throughout: DBpedia removes
+headroom, so both the gain and the effect of C vanish. New angle: at the extreme,
+the weak model does not merely gain less, it fails to produce usable output.
+
+**Caveats.** One seed. In-sample inflated by 100-query channel. phi3 parse rates
+elevated on DBpedia generally; treat phi3 DBpedia numbers as fragile even where
+valid. DBpedia conflates class-count and difficulty (limitations note).
+
+**Next.** Multi-seed check remains the load-bearing follow-up. Do not re-run phi3
+C=10; the breakdown is a property of the setting, not a fluke.
+
