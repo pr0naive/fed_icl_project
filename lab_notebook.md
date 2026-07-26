@@ -1597,3 +1597,40 @@ the two similarity orderings (ascending vs descending) across alpha {0.05, 0.5, 
 mistral, three seeds: does the ascending-minus-descending gap widen as alpha falls?
 Also pending: seeds 99, 3 to firm the effect size; llama3/phi3 for capability
 dependence.
+
+## 26/07/2026 Alpha sweep (ordering x heterogeneity): mistral, AG News, C=3, 3 seeds 
+
+**Question.** Does the similarity-ascending recency effect (ascending beats
+descending) strengthen under higher data heterogeneity? Tests the interaction the
+dissertation title implies. similarity_ascending vs similarity_descending (the two
+orderings that isolate the effect) x alpha {0.05, 0.5, 10} x seeds {42,7,13}.
+canonical_full, filtered baseline, C=3, held-out.
+
+**Result (ascending minus descending held-out gap, pp).**
+  alpha=10   (low het) : +1.70   per-seed [+2.5, +1.4, +1.2]
+  alpha=0.5  (mid het) : +1.23   per-seed [+0.0, +1.6, +2.1]
+  alpha=0.05 (high het): +1.00   per-seed [-0.2, +2.0, +1.2]
+
+**Findings.**
+1. The recency effect is POSITIVE at every heterogeneity level. Ascending
+   (most-similar-last) beats descending at all three alphas, so the recency
+   preference is robust to heterogeneity, not confined to alpha=0.5.
+2. NO reliable interaction. The mean gap trend (1.70 -> 1.23 -> 1.00 as alpha falls)
+   runs opposite to the hypothesis (weaker, not stronger, under heterogeneity), but
+   the between-alpha differences (~0.7pp range) are smaller than the within-alpha
+   seed scatter (up to ~2.2pp range). So the trend is within noise: heterogeneity
+   does NOT modulate the ordering effect in any direction we can distinguish with
+   3 seeds.
+
+**Interpretation.** The recency effect appears to be a property of the in-context
+mechanism itself, constant across heterogeneity, rather than something amplified by
+the federated partition structure. Combined with the earlier finding that federation
+attenuates ordering relative to single-model ICL: federation dampens ordering
+effects, and the small recency preference that survives is heterogeneity-independent.
+
+**Caveats.** The hypothesised interaction (ordering stronger under heterogeneity) is
+NOT supported; the honest result is a null interaction with a robust main effect.
+Do not overclaim an interaction. 3 seeds; between-alpha differences within seed
+noise. Single model, single C. At alpha=0.05 the partition is extreme and per-seed
+gaps noisy (seed 42 went slightly negative), consistent with noise not a real
+reversal.
