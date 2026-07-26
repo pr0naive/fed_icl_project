@@ -3,7 +3,7 @@
     "model": "mistral",
     "num_clients": 3,
     "num_rounds": 6,
-    "dirichlet_alpha": 0.5,
+    "dirichlet_alpha": 0.05,
     "num_shots": 3,
     "num_server_queries": 100,
     "eval_size": 1000,
@@ -20,62 +20,62 @@
   "rounds": [
     {
       "round": 0,
-      "accuracy": 0.23
+      "accuracy": 0.21
     },
     {
       "round": 1,
-      "accuracy": 0.81,
-      "correct": 81,
-      "total": 100,
-      "time_seconds": 208.5650074481964
-    },
-    {
-      "round": 2,
       "accuracy": 0.8,
       "correct": 80,
       "total": 100,
-      "time_seconds": 203.13693284988403
+      "time_seconds": 211.22182774543762
     },
     {
-      "round": 3,
-      "accuracy": 0.81,
-      "correct": 81,
-      "total": 100,
-      "time_seconds": 202.26095604896545
-    },
-    {
-      "round": 4,
-      "accuracy": 0.81,
-      "correct": 81,
-      "total": 100,
-      "time_seconds": 203.69276523590088
-    },
-    {
-      "round": 5,
-      "accuracy": 0.78,
-      "correct": 78,
-      "total": 100,
-      "time_seconds": 202.55185985565186
-    },
-    {
-      "round": 6,
+      "round": 2,
       "accuracy": 0.82,
       "correct": 82,
       "total": 100,
-      "time_seconds": 202.60491919517517
+      "time_seconds": 206.28090238571167
+    },
+    {
+      "round": 3,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 206.56006336212158
+    },
+    {
+      "round": 4,
+      "accuracy": 0.82,
+      "correct": 82,
+      "total": 100,
+      "time_seconds": 206.51688027381897
+    },
+    {
+      "round": 5,
+      "accuracy": 0.82,
+      "correct": 82,
+      "total": 100,
+      "time_seconds": 207.80324602127075
+    },
+    {
+      "round": 6,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 207.65257287025452
     }
   ],
   "baselines": {
     "zero_shot": 0.736,
-    "local_only": 0.74
+    "local_only": 0.733
   },
-  "in_sample_accuracy": 0.82,
-  "eval_accuracy": 0.74,
-  "total_time_seconds": 1222.8124980926514,
+  "in_sample_accuracy": 0.78,
+  "eval_accuracy": 0.744,
+  "total_time_seconds": 1246.0355360507965,
   "parse_stats": {
-    "total_calls": 10164,
-    "fallback_count": 159,
-    "fallback_rate": 0.01564344746162928,
+    "total_calls": 10104,
+    "fallback_count": 173,
+    "fallback_rate": 0.017121931908155186,
     "sample_unparseable": [
       "technology (which can be further classified as 'business",
       "technology (can be considered as a subcategory of",
@@ -104,9 +104,9 @@
       "technology (can be considered as a subcategory of",
       "technology (which can be considered a subcategory of",
       "technology (which can be considered a subcategory of",
-      "entertainment (or possibly culture, depending on the context",
+      "technology (which can be considered a subcategory of",
       "technology (a subcategory of science)",
-      "technology (or science)"
+      "technology (or entertainment, depending on the context of"
     ]
   },
   "variant": "fed_icl"

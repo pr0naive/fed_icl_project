@@ -3,13 +3,13 @@
     "model": "mistral",
     "num_clients": 3,
     "num_rounds": 6,
-    "dirichlet_alpha": 0.5,
+    "dirichlet_alpha": 0.05,
     "num_shots": 3,
     "num_server_queries": 100,
     "eval_size": 1000,
     "selection_strategy": "similarity_embedding",
-    "order_strategy": "similarity_ascending",
-    "seed": 13,
+    "order_strategy": "similarity_descending",
+    "seed": 42,
     "client_pool_size": 250,
     "client_pool_actual": 120000,
     "data_regime": "canonical_full",
@@ -20,62 +20,62 @@
   "rounds": [
     {
       "round": 0,
-      "accuracy": 0.23
+      "accuracy": 0.22
     },
     {
       "round": 1,
-      "accuracy": 0.81,
-      "correct": 81,
+      "accuracy": 0.72,
+      "correct": 72,
       "total": 100,
-      "time_seconds": 208.5650074481964
+      "time_seconds": 200.0820667743683
     },
     {
       "round": 2,
-      "accuracy": 0.8,
-      "correct": 80,
+      "accuracy": 0.76,
+      "correct": 76,
       "total": 100,
-      "time_seconds": 203.13693284988403
+      "time_seconds": 198.86354207992554
     },
     {
       "round": 3,
-      "accuracy": 0.81,
-      "correct": 81,
+      "accuracy": 0.79,
+      "correct": 79,
       "total": 100,
-      "time_seconds": 202.26095604896545
+      "time_seconds": 198.92014455795288
     },
     {
       "round": 4,
-      "accuracy": 0.81,
-      "correct": 81,
+      "accuracy": 0.79,
+      "correct": 79,
       "total": 100,
-      "time_seconds": 203.69276523590088
+      "time_seconds": 198.24820113182068
     },
     {
       "round": 5,
-      "accuracy": 0.78,
-      "correct": 78,
+      "accuracy": 0.77,
+      "correct": 77,
       "total": 100,
-      "time_seconds": 202.55185985565186
+      "time_seconds": 198.53589630126953
     },
     {
       "round": 6,
-      "accuracy": 0.82,
-      "correct": 82,
+      "accuracy": 0.77,
+      "correct": 77,
       "total": 100,
-      "time_seconds": 202.60491919517517
+      "time_seconds": 198.49845576286316
     }
   ],
   "baselines": {
     "zero_shot": 0.736,
-    "local_only": 0.74
+    "local_only": 0.663
   },
-  "in_sample_accuracy": 0.82,
-  "eval_accuracy": 0.74,
-  "total_time_seconds": 1222.8124980926514,
+  "in_sample_accuracy": 0.77,
+  "eval_accuracy": 0.732,
+  "total_time_seconds": 1193.1483521461487,
   "parse_stats": {
-    "total_calls": 10164,
-    "fallback_count": 159,
-    "fallback_rate": 0.01564344746162928,
+    "total_calls": 10026,
+    "fallback_count": 170,
+    "fallback_rate": 0.016955914621982846,
     "sample_unparseable": [
       "technology (which can be further classified as 'business",
       "technology (can be considered as a subcategory of",
@@ -102,11 +102,11 @@
       "politics",
       "entertainment (since it is related to Hollywood producer and",
       "technology (can be considered as a subcategory of",
+      "politics",
+      "technology (or entertainment, depending on the context)",
       "technology (which can be considered a subcategory of",
-      "technology (which can be considered a subcategory of",
-      "entertainment (or possibly culture, depending on the context",
-      "technology (a subcategory of science)",
-      "technology (or science)"
+      "technology (subcategory: hardware)",
+      "technology (which can be considered a subcategory of"
     ]
   },
   "variant": "fed_icl"
