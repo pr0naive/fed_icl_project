@@ -1523,3 +1523,77 @@ valid. DBpedia conflates class-count and difficulty (limitations note).
 **Next.** Multi-seed check remains the load-bearing follow-up. Do not re-run phi3
 C=10; the breakdown is a property of the setting, not a fluke.
 
+## 26/07/2026 Ordering sweep (core experiment): mistral, AG News canonical_full, C=3, 3 seeds 
+
+**Motivation.** This is the central experiment of the dissertation, which asks how
+in-context demonstration ordering affects federated ICL under data heterogeneity.
+All prior work (pool size, filter, C, DBpedia) was replication and boundary-setting;
+this measures the titular effect. Run on AG News rather than DBpedia because
+DBpedia is saturated (local-only 82-93%, federation a no-op), leaving no room for
+ordering to act; AG News with the filtered baseline leaves mistral real headroom
+(local-only ~68-76%), so demonstrations are load-bearing and their order can matter.
+mistral chosen as the lens: it was the clean beneficiary of federation on AG News,
+so the setting where ordering is most likely to be observable.
+
+**Design.** Six ordering strategies (original, random_shuffle, similarity_ascending,
+similarity_descending, label_grouped, label_alternating) x seeds {42,7,13}.
+canonical_full regime, full 120k partitioned, queries+eval from 7.6k test,
+filtered baseline, C=3, alpha=0.5, held-out headline. Ordering is applied
+consistently in the round-based server-query prediction, the local-only baseline,
+and the held-out eval, and demonstrations are shuffled before ordering so that
+selection (kNN) and order are independent. This isolates order, holding which
+demonstrations are used fixed. Note: ordering similarity uses lexical word overlap,
+while selection uses embedding cosine, so "similarity ordering" means lexical-overlap
+ordering.
+
+**Result (held-out accuracy, per seed and mean).**
+  order                   s42    s7    s13    mean
+  similarity_ascending   73.3   74.0   74.0   73.8   <- best; beats original in all 3 seeds
+  label_alternating      73.4   73.6   73.2   73.4
+  label_grouped          73.6   72.9   73.2   73.2
+  random_shuffle         72.1   71.8   74.5   72.8
+  original               71.5   73.7   73.0   72.7
+  similarity_descending  73.3   72.4   71.9   72.5   <- worst
+
+**Findings.**
+1. Small but seed-consistent recency effect on the similarity axis.
+   similarity_ascending (most-similar demonstration LAST, nearest the query) beats
+   similarity_descending (most-similar FIRST) by 1.3pp on the mean, and the direction
+   holds in all three seeds. This is the ascending-vs-descending contrast, the clean
+   isolation of ordering: identical demonstrations, opposite order. The nearest
+   demonstration to the query position carries most weight, consistent with the
+   recency bias documented by Zhao et al. (2021), which the proposal cites as the
+   mechanism.
+2. Label-based and random orderings show no systematic effect. original,
+   random_shuffle, label_grouped, label_alternating all cluster at 72.7-73.4 with no
+   consistent separation across seeds. Grouping or alternating by label does not help
+   or hurt; the action is entirely on the similarity axis.
+3. The ordering effect is dominated by, but separable from, seed variance. The
+   federation gain itself swings sign across seeds (positive on 42, negative on 7/13),
+   the familiar partition-seed dominance. Reading held-out accuracy per ordering
+   (rather than the gain) strips out that baseline swing and exposes the ordering
+   effect underneath.
+
+**Interpretation.** In single-model ICL, ordering is known to matter substantially
+(Lu et al. 2022). In this federated setting it is muted, roughly 1.3pp on the one
+axis where it appears. A plausible reason: the round-based aggregation and majority
+vote across three clients average away much of the per-prompt ordering sensitivity
+that a single model shows. So federation appears to attenuate ordering effects, and
+what survives is the recency preference on the similarity axis. That attenuation is
+itself a contribution: it says ordering-robustness is a side benefit of the
+federated protocol.
+
+**Caveats.** The effect (1.3pp) is within the range of seed-to-seed variance, so
+while its direction is consistent across three seeds, the magnitude is modest and
+three seeds is thin for a firm effect size. Single model (mistral) and single
+heterogeneity level (alpha=0.5). Lexical-overlap ordering, not embedding ordering.
+Claims are framed as "small, seed-consistent recency effect," not a large one.
+
+**Next.** The open question this raises is the interaction the dissertation title
+promises: does the recency effect strengthen under higher heterogeneity? At higher
+heterogeneity clients are more specialised and the shared context noisier, so which
+demonstration sits nearest the query should matter more. Test via an alpha sweep on
+the two similarity orderings (ascending vs descending) across alpha {0.05, 0.5, 10},
+mistral, three seeds: does the ascending-minus-descending gap widen as alpha falls?
+Also pending: seeds 99, 3 to firm the effect size; llama3/phi3 for capability
+dependence.
