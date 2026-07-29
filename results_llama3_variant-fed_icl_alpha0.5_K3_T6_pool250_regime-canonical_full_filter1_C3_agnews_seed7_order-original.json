@@ -1,0 +1,103 @@
+{
+  "config": {
+    "model": "llama3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 7,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "agnews"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.21
+    },
+    {
+      "round": 1,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 409.31699538230896
+    },
+    {
+      "round": 2,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 406.37067222595215
+    },
+    {
+      "round": 3,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 411.5689368247986
+    },
+    {
+      "round": 4,
+      "accuracy": 0.76,
+      "correct": 76,
+      "total": 100,
+      "time_seconds": 412.81921195983887
+    },
+    {
+      "round": 5,
+      "accuracy": 0.79,
+      "correct": 79,
+      "total": 100,
+      "time_seconds": 408.64844274520874
+    },
+    {
+      "round": 6,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 403.3370101451874
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.767,
+    "local_only": 0.728
+  },
+  "in_sample_accuracy": 0.78,
+  "eval_accuracy": 0.742,
+  "total_time_seconds": 2452.0613112449646,
+  "parse_stats": {
+    "total_calls": 10128,
+    "fallback_count": 20,
+    "fallback_rate": 0.0019747235387045812,
+    "sample_unparseable": [
+      "technology",
+      "politics",
+      "politics",
+      "technology",
+      "none",
+      "politics",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "politics",
+      "entertainment",
+      "arts",
+      "design",
+      "entertainment",
+      "entertainment",
+      "entertainment",
+      "technology",
+      "technology",
+      "entertainment",
+      "technology"
+    ]
+  },
+  "variant": "fed_icl"
+}

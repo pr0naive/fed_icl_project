@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "label_alternating",
+    "seed": 99,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "agnews"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.21
+    },
+    {
+      "round": 1,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 197.99386477470398
+    },
+    {
+      "round": 2,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 196.70377683639526
+    },
+    {
+      "round": 3,
+      "accuracy": 0.78,
+      "correct": 78,
+      "total": 100,
+      "time_seconds": 195.69985365867615
+    },
+    {
+      "round": 4,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 195.60263633728027
+    },
+    {
+      "round": 5,
+      "accuracy": 0.8,
+      "correct": 80,
+      "total": 100,
+      "time_seconds": 196.0077953338623
+    },
+    {
+      "round": 6,
+      "accuracy": 0.81,
+      "correct": 81,
+      "total": 100,
+      "time_seconds": 197.30146551132202
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.736,
+    "local_only": 0.734
+  },
+  "in_sample_accuracy": 0.81,
+  "eval_accuracy": 0.72,
+  "total_time_seconds": 1179.3094363212585,
+  "parse_stats": {
+    "total_calls": 10164,
+    "fallback_count": 156,
+    "fallback_rate": 0.015348288075560802,
+    "sample_unparseable": [
+      "technology (which can be further classified as 'business",
+      "technology (can be considered as a subcategory of",
+      "SPACE",
+      "entertainment (which can be considered a subcategory of",
+      "entertainment (since it's related to video games",
+      "Not Applicable (N/A)",
+      "\"miscellaneous\" (or possibly \"",
+      "Not directly applicable (NA)",
+      "\"technology\" (which can be considered a",
+      "entertainment (which can be considered a subcategory of",
+      "entertainment (or possibly arts, depending on the specific",
+      "entertainment (not directly falling under any of your provided",
+      "politics",
+      "\"world\" (technology subcategory)",
+      "Not Enough Information",
+      "\"world\" (assuming it's about",
+      "entertainment (which can be further classified as gaming)",
+      "entertainment (which can be considered a subcategory of",
+      "SPACE",
+      "politics (not explicitly in your categories, but closest",
+      "Not Applicable (N/A)",
+      "\"world\" (assuming that the column is",
+      "politics",
+      "entertainment (since it is related to Hollywood producer and",
+      "technology (can be considered as a subcategory of",
+      "technology (a subcategory of science)",
+      "technology (which can be considered a subcategory of",
+      "law (or legal affairs could also be used)",
+      "technology (a subcategory of science)",
+      "technology (a subset of science)"
+    ]
+  },
+  "variant": "fed_icl"
+}

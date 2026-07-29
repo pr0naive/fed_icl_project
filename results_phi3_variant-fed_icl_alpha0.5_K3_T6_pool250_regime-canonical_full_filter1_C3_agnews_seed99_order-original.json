@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 99,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "agnews"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.21
+    },
+    {
+      "round": 1,
+      "accuracy": 0.58,
+      "correct": 58,
+      "total": 100,
+      "time_seconds": 151.1988115310669
+    },
+    {
+      "round": 2,
+      "accuracy": 0.57,
+      "correct": 57,
+      "total": 100,
+      "time_seconds": 151.69944143295288
+    },
+    {
+      "round": 3,
+      "accuracy": 0.59,
+      "correct": 59,
+      "total": 100,
+      "time_seconds": 151.8513617515564
+    },
+    {
+      "round": 4,
+      "accuracy": 0.57,
+      "correct": 57,
+      "total": 100,
+      "time_seconds": 151.71811985969543
+    },
+    {
+      "round": 5,
+      "accuracy": 0.57,
+      "correct": 57,
+      "total": 100,
+      "time_seconds": 151.7756450176239
+    },
+    {
+      "round": 6,
+      "accuracy": 0.55,
+      "correct": 55,
+      "total": 100,
+      "time_seconds": 151.86771655082703
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.559,
+    "local_only": 0.599
+  },
+  "in_sample_accuracy": 0.55,
+  "eval_accuracy": 0.568,
+  "total_time_seconds": 910.1111376285553,
+  "parse_stats": {
+    "total_calls": 10164,
+    "fallback_count": 138,
+    "fallback_rate": 0.01357733175914994,
+    "sample_unparseable": [
+      "politics (not in given categories, but closest",
+      "music industry news\n\n(Note to user:",
+      "politics",
+      "politics (not in given categories)",
+      "politics (not in given categories)",
+      "\"storage\" (This is a subcategory of",
+      "music industry (not listed in options)",
+      "medicine (not listed as one of your",
+      "fashion\n\nHeadline: \"Owen",
+      "politics (Note: Since politics is not an",
+      "entertainment (not listed in categories)",
+      "politics",
+      "politics (Note: Since politics is not an",
+      "politics",
+      "games\n\nHeadline: \"The New",
+      "technology (not listed as an option)",
+      "politics",
+      "politics (not in given categories)",
+      "religion and philosophy (Note: Since \"",
+      "politics",
+      "politics",
+      "politics",
+      "music industry (not listed in options)",
+      "politics (Note: Since politics is not an",
+      "entertainment (not listed in categories)",
+      "politics (Note: Since politics is not an",
+      "health",
+      "politics\n\nHeadline: \"Boe",
+      "politics (none of the given categories)",
+      "entertainment (not listed as an option)"
+    ]
+  },
+  "variant": "fed_icl"
+}
