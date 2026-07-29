@@ -1634,3 +1634,34 @@ Do not overclaim an interaction. 3 seeds; between-alpha differences within seed
 noise. Single model, single C. At alpha=0.05 the partition is extreme and per-seed
 gaps noisy (seed 42 went slightly negative), consistent with noise not a real
 reversal.
+
+## Ordering, three models x five seeds: no reliable effect 28/07/2026
+
+**Run.** Six orderings x seeds {42,7,13,99,3} x {llama3,mistral,phi3}, AG News
+canonical_full, filtered baseline, C=3, alpha=0.5, held-out. Parse fallback <2%
+everywhere (no void cells).
+
+**Result: ascending vs descending (the recency isolation), per-seed win count.**
+  llama3:  1/5 seeds  (mean -0.04)  -> no effect
+  mistral: 3/5 seeds  (mean +0.90)  -> weak, inconsistent
+  phi3:    3/5 seeds  (mean +0.62)  -> weak, inconsistent
+
+**Verdict.** NO reliable ordering effect across three models and five seeds. The
+similarity axis leans slightly toward most-similar-last (ascending) in mistral and
+phi3, but only 3/5 seeds each, with individual seeds reversing (mistral seed 99
+-0.7), and llama3 flat at 1/5. Magnitudes <1pp, within seed variance. Label-based
+and random orderings show no effect in any model. Held-out variation is dominated
+by the partition seed, not ordering.
+
+**Correction from earlier.** On 3 seeds mistral looked like a clean +1.3pp recency
+effect. Adding seeds 99 and 3 revealed seed 99 reverses it; the effect is weaker
+and inconsistent. Five seeds was necessary to avoid overclaiming.
+
+**Interpretation.** Single-model ICL shows strong order sensitivity (Lu et al.
+2022); here it washes out. Federation appears to attenuate ordering effects to
+non-significance, plausibly because round-based aggregation and majority vote
+across clients average away per-prompt ordering. Ordering-robustness as a property
+of the federated protocol.
+
+**Caveat.** Null result, honestly established on 5 seeds; framed as "no reliable
+effect," not "no effect." Single dataset, single C, single alpha (0.5).
