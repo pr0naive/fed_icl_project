@@ -1665,3 +1665,32 @@ of the federated protocol.
 
 **Caveat.** Null result, honestly established on 5 seeds; framed as "no reliable
 effect," not "no effect." Single dataset, single C, single alpha (0.5).
+
+## Alpha sweep complete: 3 models x 5 seeds, no interaction 31/07/2026
+
+**Run.** similarity_ascending vs descending x alpha {0.05, 0.5, 10} x seeds
+{42,7,13,99,3} x {llama3, mistral, phi3}. AG News canonical_full, filtered
+baseline, C=3, held-out. Confirms the earlier mistral-3-seed version.
+
+**Result: ascending-minus-descending mean gap (pp) by alpha.**
+              a=0.05   a=0.5   a=10
+  llama3      -0.32    -0.04   -0.80
+  mistral     +1.16    +0.90   +1.72
+  phi3        +0.04    +0.54   +0.40
+
+**Verdict.** No reliable interaction between ordering and heterogeneity, on any
+model. The gap does not systematically change with alpha. mistral shows a small
+positive ascending lean at every alpha (a weak main effect, ~1pp), but it is
+non-monotonic across alpha and within its own seed scatter (at alpha 10 the seeds
+span -0.5 to +4.0, a 4.5pp range, vs a 0.8pp spread between alpha means). llama3 is
+flat and slightly negative throughout; phi3 near zero throughout.
+
+**Reading.** Heterogeneity does not modulate the ordering effect. Consistent with
+findings 2 and the local-only check: ordering is a null in this retrieval-based
+setup, and varying heterogeneity does not create an effect that the main sweep did
+not find. The five-seed, three-model version rules out the interaction the title
+hypothesised.
+
+**Caveats.** mistral's small positive lean is a main effect, not an interaction; do
+not present it as "ordering matters more under heterogeneity" (the data does not
+support that in any direction). Single dataset, single C=3.
