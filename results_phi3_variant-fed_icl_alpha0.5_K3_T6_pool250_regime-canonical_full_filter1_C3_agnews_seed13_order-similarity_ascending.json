@@ -24,69 +24,69 @@
     },
     {
       "round": 1,
-      "accuracy": 0.59,
-      "correct": 59,
+      "accuracy": 0.6,
+      "correct": 60,
       "total": 100,
-      "time_seconds": 151.70815539360046
+      "time_seconds": 147.87685251235962
     },
     {
       "round": 2,
       "accuracy": 0.61,
       "correct": 61,
       "total": 100,
-      "time_seconds": 152.24513030052185
+      "time_seconds": 148.48261618614197
     },
     {
       "round": 3,
       "accuracy": 0.61,
       "correct": 61,
       "total": 100,
-      "time_seconds": 151.94466924667358
+      "time_seconds": 148.173574924469
     },
     {
       "round": 4,
       "accuracy": 0.6,
       "correct": 60,
       "total": 100,
-      "time_seconds": 151.5274736881256
+      "time_seconds": 148.4804985523224
     },
     {
       "round": 5,
       "accuracy": 0.61,
       "correct": 61,
       "total": 100,
-      "time_seconds": 151.73544788360596
+      "time_seconds": 148.75511479377747
     },
     {
       "round": 6,
       "accuracy": 0.61,
       "correct": 61,
       "total": 100,
-      "time_seconds": 151.4043583869934
+      "time_seconds": 148.69608879089355
     }
   ],
   "baselines": {
-    "zero_shot": 0.559,
-    "local_only": 0.594
+    "zero_shot": 0.556,
+    "local_only": 0.593
   },
   "in_sample_accuracy": 0.61,
   "eval_accuracy": 0.574,
-  "total_time_seconds": 910.5652749538422,
+  "total_time_seconds": 890.4647841453552,
   "parse_stats": {
     "total_calls": 10164,
     "fallback_count": 119,
     "fallback_rate": 0.011707988980716254,
     "sample_unparseable": [
       "politics (not in given categories, but closest",
-      "music industry news\n\n(Note to user:",
+      "music industry news\n\n(Note for users:",
       "politics",
       "politics (not in given categories)",
       "politics (not in given categories)",
-      "\"storage\" (This is a subcategory of",
-      "music industry (not listed in options)",
+      "\"storage\"",
+      "music industry (not listed)",
       "fashion\n\nHeadline: \"Bom",
       "\"world\" (assuming this headline refers",
-      "politics (Note: Since politics is not an",
+      "politics (Note: Since politics is not one",
       "politics (Note: Since politics is not an",
       "politics",
       "friendship. Since this headline does not fit",
@@ -95,7 +95,7 @@
       "politics (not in given categories)",
       "politics",
       "politics",
-      "politics (not listed in the categories)",
+      "politics (Note: Since politics is not an",
       "health",
       "politics",
       "politics",

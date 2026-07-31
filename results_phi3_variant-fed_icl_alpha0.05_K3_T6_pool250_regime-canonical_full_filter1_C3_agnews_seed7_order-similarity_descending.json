@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.05,
+    "num_shots": 3,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "similarity_descending",
+    "seed": 7,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "agnews"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.21
+    },
+    {
+      "round": 1,
+      "accuracy": 0.57,
+      "correct": 57,
+      "total": 100,
+      "time_seconds": 145.35840892791748
+    },
+    {
+      "round": 2,
+      "accuracy": 0.55,
+      "correct": 55,
+      "total": 100,
+      "time_seconds": 145.6962685585022
+    },
+    {
+      "round": 3,
+      "accuracy": 0.57,
+      "correct": 57,
+      "total": 100,
+      "time_seconds": 145.7913019657135
+    },
+    {
+      "round": 4,
+      "accuracy": 0.56,
+      "correct": 56,
+      "total": 100,
+      "time_seconds": 145.60735154151917
+    },
+    {
+      "round": 5,
+      "accuracy": 0.59,
+      "correct": 59,
+      "total": 100,
+      "time_seconds": 146.02870917320251
+    },
+    {
+      "round": 6,
+      "accuracy": 0.58,
+      "correct": 58,
+      "total": 100,
+      "time_seconds": 145.88612151145935
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.559,
+    "local_only": 0.608
+  },
+  "in_sample_accuracy": 0.58,
+  "eval_accuracy": 0.568,
+  "total_time_seconds": 874.3682019710541,
+  "parse_stats": {
+    "total_calls": 10050,
+    "fallback_count": 174,
+    "fallback_rate": 0.017313432835820895,
+    "sample_unparseable": [
+      "politics (not in given categories, but closest",
+      "music industry news\n\n(Note to user:",
+      "politics",
+      "politics (not in given categories)",
+      "politics (not in given categories)",
+      "\"storage\" (This is a subcategory of",
+      "music industry (not listed in options)",
+      "technology (not listed in options)",
+      "fashion\n\nHeadline: \"Brit",
+      "accident news",
+      "security (not listed in options, but closest to",
+      "entertainment (not listed as an option)",
+      "cybersecurity",
+      "technology (not listed in categories)",
+      "space",
+      "environment",
+      "politics (not listed in categories)",
+      "politics (not in given categories)",
+      "entertainment (not listed in categories)",
+      "relationships",
+      "friendship",
+      "entertainment (not listed in categories)",
+      "Belarus #39; Nesterenko",
+      "technology (Note: Since \"technology\"",
+      "industry",
+      "politics",
+      "entertainment (Note: Since \"entertain",
+      "medical research (not listed in the categories)",
+      "games (This category is not listed, but",
+      "entertainment (not in the given categories)"
+    ]
+  },
+  "variant": "fed_icl"
+}

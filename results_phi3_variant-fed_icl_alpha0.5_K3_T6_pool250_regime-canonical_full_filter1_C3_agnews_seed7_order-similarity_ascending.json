@@ -24,74 +24,72 @@
     },
     {
       "round": 1,
-      "accuracy": 0.56,
-      "correct": 56,
+      "accuracy": 0.55,
+      "correct": 55,
       "total": 100,
-      "time_seconds": 152.0827968120575
+      "time_seconds": 148.89302492141724
     },
     {
       "round": 2,
       "accuracy": 0.55,
       "correct": 55,
       "total": 100,
-      "time_seconds": 151.82683515548706
+      "time_seconds": 147.90652441978455
     },
     {
       "round": 3,
-      "accuracy": 0.58,
-      "correct": 58,
-      "total": 100,
-      "time_seconds": 152.002277135849
-    },
-    {
-      "round": 4,
-      "accuracy": 0.61,
-      "correct": 61,
-      "total": 100,
-      "time_seconds": 151.57908940315247
-    },
-    {
-      "round": 5,
       "accuracy": 0.56,
       "correct": 56,
       "total": 100,
-      "time_seconds": 152.02744150161743
+      "time_seconds": 147.94280743598938
+    },
+    {
+      "round": 4,
+      "accuracy": 0.6,
+      "correct": 60,
+      "total": 100,
+      "time_seconds": 148.214905500412
+    },
+    {
+      "round": 5,
+      "accuracy": 0.55,
+      "correct": 55,
+      "total": 100,
+      "time_seconds": 148.50030136108398
     },
     {
       "round": 6,
-      "accuracy": 0.59,
-      "correct": 59,
+      "accuracy": 0.57,
+      "correct": 57,
       "total": 100,
-      "time_seconds": 151.69801449775696
+      "time_seconds": 147.80565428733826
     }
   ],
   "baselines": {
-    "zero_shot": 0.559,
-    "local_only": 0.617
+    "zero_shot": 0.556,
+    "local_only": 0.615
   },
-  "in_sample_accuracy": 0.59,
-  "eval_accuracy": 0.569,
-  "total_time_seconds": 911.2164974212646,
+  "in_sample_accuracy": 0.57,
+  "eval_accuracy": 0.565,
+  "total_time_seconds": 889.2632565498352,
   "parse_stats": {
     "total_calls": 10128,
-    "fallback_count": 114,
-    "fallback_rate": 0.011255924170616114,
+    "fallback_count": 112,
+    "fallback_rate": 0.011058451816745656,
     "sample_unparseable": [
       "politics (not in given categories, but closest",
-      "music industry news\n\n(Note to user:",
+      "music industry news\n\n(Note for users:",
       "politics",
       "politics (not in given categories)",
       "politics (not in given categories)",
-      "\"storage\" (This is a subcategory of",
-      "music industry (not listed in options)",
-      "fashion\n\nHeadline: \"Brit",
+      "\"storage\"",
+      "music industry (not listed)",
       "health (not in the given categories)",
-      "accident news",
       "politics (Note: Since politics is not an",
+      "baseball (not listed in categories)",
       "politics",
       "entertainment (not listed in categories)",
       "fiction (not listed)",
-      "friendship",
       "games\n\nHeadline: \"Scient",
       "politics",
       "industry",
@@ -104,9 +102,11 @@
       "politics",
       "politics",
       "entertainment (not listed)",
-      "fashion\n\n(Note for clarity,",
+      "fashion\n\n(Note to user: Since",
       "union",
-      "fashion\n\nHeadline: \"Bill"
+      "fashion\n\nHeadline: \"Bill",
+      "family news",
+      "politics"
     ]
   },
   "variant": "fed_icl"
