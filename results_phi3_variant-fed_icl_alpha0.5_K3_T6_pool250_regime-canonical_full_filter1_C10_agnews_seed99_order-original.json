@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 0.5,
+    "num_shots": 10,
+    "num_server_queries": 100,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 99,
+    "client_pool_size": 250,
+    "client_pool_actual": 120000,
+    "data_regime": "canonical_full",
+    "filter_local_data": true,
+    "filter_c": 10,
+    "dataset": "agnews"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.23
+    },
+    {
+      "round": 1,
+      "accuracy": 0.48,
+      "correct": 48,
+      "total": 100,
+      "time_seconds": 799.4971332550049
+    },
+    {
+      "round": 2,
+      "accuracy": 0.49,
+      "correct": 49,
+      "total": 100,
+      "time_seconds": 803.1650197505951
+    },
+    {
+      "round": 3,
+      "accuracy": 0.5,
+      "correct": 50,
+      "total": 100,
+      "time_seconds": 803.8484871387482
+    },
+    {
+      "round": 4,
+      "accuracy": 0.48,
+      "correct": 48,
+      "total": 100,
+      "time_seconds": 804.0350956916809
+    },
+    {
+      "round": 5,
+      "accuracy": 0.51,
+      "correct": 51,
+      "total": 100,
+      "time_seconds": 803.7008986473083
+    },
+    {
+      "round": 6,
+      "accuracy": 0.5,
+      "correct": 50,
+      "total": 100,
+      "time_seconds": 804.1579775810242
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.559,
+    "local_only": 0.563
+  },
+  "in_sample_accuracy": 0.5,
+  "eval_accuracy": 0.497,
+  "total_time_seconds": 4818.404652833939,
+  "parse_stats": {
+    "total_calls": 22356,
+    "fallback_count": 606,
+    "fallback_rate": 0.027106816961889425,
+    "sample_unparseable": [
+      "politics (not in given categories, but closest",
+      "music industry news\n\n(Note to user:",
+      "politics",
+      "politics (not in given categories)",
+      "politics (not in given categories)",
+      "\"storage\"",
+      "music industry (not listed)",
+      "news",
+      "Headline: \"Bombs explode at",
+      "Headline: \"Hall had Penn State",
+      "Headline: \"Yankees restore some",
+      "Headline: \"U.S. Army Des",
+      "Headline: \"Coughlin Not Pleased",
+      "Headline: \"Cricket: India win in",
+      "Headline: \"Patriots ride defense to",
+      "Headline: \"Greenhorn no longer In the",
+      "Headline: \"South Korea to Pick Country",
+      "Headline: \"Arafat Meets With",
+      "Headline: \"Patriots ride defense to",
+      "Headline: \"Patriots Beat Colts",
+      "Headline: \"Delta, pilots agree to",
+      "Headline: \"Patriots' Neal",
+      "Headline: \"Serena Williams ends Maures",
+      "Timeline of past 25 years in Afghan",
+      "Headline: \"Edmonds homer lif",
+      "Headline: \"Israeli parliament backs",
+      "Headline: \"Briton begs for",
+      "Headline: \"Boeing Gets \\$",
+      "Headline: \"Sony PSP Draws",
+      "Headline: \"Hewitt advances to"
+    ]
+  },
+  "variant": "fed_icl"
+}
