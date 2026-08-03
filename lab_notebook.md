@@ -1694,3 +1694,63 @@ hypothesised.
 **Caveats.** mistral's small positive lean is a main effect, not an interaction; do
 not present it as "ordering matters more under heterogeneity" (the data does not
 support that in any direction). Single dataset, single C=3.
+
+## Five-seed C sweep overturns the single-seed federation gains 03/08/2026
+
+**What prompted this.** The C sweep (C=3,5,10) was originally run only at seed 42,
+which showed clean positive gains (mistral +3.3/+5.3/+6.3, phi3 +4.9/+3.7/+0.9) that
+grew with C. On Dr. Jin's steer I multi-seeded it: C=5 and C=10 at seeds 7,13,99,3
+for all three models, AG News canonical_full, filtered baseline, held-out, alpha 0.5,
+original ordering. 24 runs, all completed (parse <10% throughout).
+
+**Result (held-out minus local-only, per seed, mean over 5).**
+  model    C    per-seed gains                     mean
+  llama3   3    -0.2, 1.4, 1.8, 1.9, 1.0           +1.2
+  llama3   5     1.2, 0.1, 0.9, 0.8, -0.1          +0.6
+  llama3   10    3.6, -0.5, -1.6, -1.5, -3.4       -0.7
+  mistral  3     3.3, -0.9, -0.6, -0.4, -2.7       -0.3
+  mistral  5     5.3, -4.6, -5.1, -0.9, -3.0       -1.7
+  mistral  10    6.3, -4.7, -3.2, -4.3, -10.6      -3.3
+  phi3     3     4.9, -4.3, -1.1, -3.1, -2.7       -1.3
+  phi3     5     3.7, -5.0, 0.0, -3.2, -3.0        -1.5
+  phi3     10    0.9, -4.2, -5.6, -6.6, -8.9       -4.9
+
+**Verdict (a reversal I must record honestly).**
+1. The positive gains were seed 42 only. In every cell, seed 42 is strongly
+   positive and the other four seeds are negative. The earlier "+5 to +6 on weaker
+   models" headline was one favourable partition draw, not a property of the method.
+2. Across five seeds, mean federation gain is near zero to negative for all three
+   models. Federation does not reliably help over the filtered local baseline in
+   this setup.
+3. Wider C makes it worse, monotonically. Every model's mean gain falls as C grows
+   (mistral -0.3 -> -1.7 -> -3.3; phi3 -1.3 -> -1.5 -> -4.9). More coupled context
+   degrades the federated result relative to the baseline.
+4. Partition seed dominates all other variables. Within-cell spread reaches 17pp
+   (mistral C=10: +6.3 to -10.6), far larger than any difference between models or
+   C values. The single largest source of variation in the whole study is which
+   Dirichlet partition was drawn.
+
+**What this changes.**
+- The clean positive-gain claim is retracted. "Federation helps weak models by +5"
+  was a single-seed artefact and cannot be stated.
+- The headroom framing survives only in weakened form: saturated baselines (DBpedia
+  82-93%) are reliably negative, and gain becomes more negative as the baseline
+  saturates and as C grows. But there is NO regime in the five-seed data where
+  federation reliably helps. So headroom predicts the ORDERING of the (negative)
+  gains, not a positive-vs-negative switch.
+- The honest thesis is now a negative result: in the canonical, filtered, held-out
+  setup, federated ICL provides no reliable benefit over a strong local baseline,
+  and apparent single-run gains are dominated by partition-seed variance.
+
+**Why this is the right outcome.** Multi-seeding caught a false positive before
+write-up, exactly as it did for the ordering result. A five-seed negative result is
+more defensible than a one-seed positive one. This is a caution to practitioners
+and a genuine finding about the method's fragility to partition variance.
+
+**Loose end checked.** Earlier I reported mistral C=3 seed-42 gain as +5.0; this
+table shows +3.3. Cause: a duplicate seed-42 original run (two files). [record which
+is canonical after the check].
+
+**Next.** Notify Dr. Jin (the prior email led with the seed-42 gains). Restate the
+headroom/gain finding across the deck and notebook. Then writing. No further runs;
+the experimental arc is complete and the story is now honest and five-seed solid.
