@@ -1754,3 +1754,26 @@ is canonical after the check].
 **Next.** Notify Dr. Jin (the prior email led with the seed-42 gains). Restate the
 headroom/gain finding across the deck and notebook. Then writing. No further runs;
 the experimental arc is complete and the story is now honest and five-seed solid.
+
+### Addendum: seed-42 duplicate resolved
+
+The mistral C=3 seed-42 file existed in two versions: an unstamped pre-stamp run
+(gain +5.0, local 68.0 / held 73.0) and a stamped run under current code
+(gain +3.3, local 68.2 / held 71.5). The stamped +3.3 is canonical, since it was
+produced by the same final code as all other seeds; the unstamped +5.0 predates the
+dataset stamp and is not directly comparable, so it was moved to _stale/. The
+earlier "+5.0" I had reported for mistral C=3 came from the stale file.
+
+Consequence: the five-seed means are unchanged (the extraction already used the
+stamped file), so nothing in the reversal table moves. If anything the reversal is
+marginally softer than first stated: seed 42's true gain under final code is +3.3,
+not +5.0, so the one favourable draw was slightly less favourable. A third file
+matching the glob was the DBpedia seed-42 run (gain -1.5), unrelated to the AG News
+C sweep and correctly separate.
+
+Verified five-seed C-sweep (AG News, alpha 0.5, filtered baseline, held-out gain):
+  llama3   3/5/10:  +1.2 / +0.6 / -0.7
+  mistral  3/5/10:  -0.3 / -1.7 / -3.3
+  phi3     3/5/10:  -1.3 / -1.5 / -4.9
+Every cell: seed 42 positive, other four seeds negative. Mean gain near zero to
+negative throughout; worsens monotonically with C; partition-seed spread dominates.
