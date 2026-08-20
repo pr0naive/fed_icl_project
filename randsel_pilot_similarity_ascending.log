@@ -1,0 +1,442 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+╔══════════════════════════════════════════════════════╗
+  ║  Fed-ICL Replication  —  AG News Topic Classification║
+  ╚══════════════════════════════════════════════════════╝
+
+  Ollama ready. Using model: mistral
+============================================================
+DATA DISTRIBUTION SUMMARY  (regime=canonical_full)
+============================================================
+  Dataset: agnews (fancyzhx/ag_news), 4 classes
+  Client pools: 250 of 120000 train partitioned across 3 clients
+  Server queries: 100 from TEST (QUERY_SEED=12345)
+  Held-out eval:  1000 from TEST (EVAL_SEED=12345), disjoint from queries
+  Dirichlet alpha: 0.5   partition SEED=42
+  Client 0: 67 (world=1, sports=2, business=60, science=4)
+  Client 1: 82 (world=25, sports=30, business=1, science=26)
+  Client 2: 101 (world=37, sports=31, business=1, science=32)
+============================================================
+
+Running baselines first...
+
+============================================================
+BASELINE: Zero-Shot
+============================================================
+  Progress: 10/1000 (acc: 40.0%)
+  Progress: 20/1000 (acc: 50.0%)
+  Progress: 30/1000 (acc: 56.7%)
+  Progress: 40/1000 (acc: 57.5%)
+  Progress: 50/1000 (acc: 62.0%)
+  Progress: 60/1000 (acc: 65.0%)
+  Progress: 70/1000 (acc: 65.7%)
+  Progress: 80/1000 (acc: 68.8%)
+  Progress: 90/1000 (acc: 70.0%)
+  Progress: 100/1000 (acc: 71.0%)
+  Progress: 110/1000 (acc: 71.8%)
+  Progress: 120/1000 (acc: 71.7%)
+  Progress: 130/1000 (acc: 73.1%)
+  Progress: 140/1000 (acc: 72.9%)
+  Progress: 150/1000 (acc: 73.3%)
+  Progress: 160/1000 (acc: 74.4%)
+  Progress: 170/1000 (acc: 73.5%)
+  Progress: 180/1000 (acc: 73.3%)
+  Progress: 190/1000 (acc: 73.7%)
+  Progress: 200/1000 (acc: 73.5%)
+  Progress: 210/1000 (acc: 74.3%)
+  Progress: 220/1000 (acc: 74.5%)
+  Progress: 230/1000 (acc: 73.5%)
+  Progress: 240/1000 (acc: 74.2%)
+  Progress: 250/1000 (acc: 74.0%)
+  Progress: 260/1000 (acc: 73.8%)
+  Progress: 270/1000 (acc: 74.1%)
+  Progress: 280/1000 (acc: 74.3%)
+  Progress: 290/1000 (acc: 73.4%)
+  Progress: 300/1000 (acc: 73.7%)
+  Progress: 310/1000 (acc: 73.9%)
+  Progress: 320/1000 (acc: 73.1%)
+  Progress: 330/1000 (acc: 73.3%)
+  Progress: 340/1000 (acc: 73.8%)
+  Progress: 350/1000 (acc: 74.0%)
+  Progress: 360/1000 (acc: 73.6%)
+  Progress: 370/1000 (acc: 73.2%)
+  Progress: 380/1000 (acc: 73.4%)
+  Progress: 390/1000 (acc: 73.1%)
+  Progress: 400/1000 (acc: 72.5%)
+  Progress: 410/1000 (acc: 72.7%)
+  Progress: 420/1000 (acc: 72.9%)
+  Progress: 430/1000 (acc: 73.0%)
+  Progress: 440/1000 (acc: 73.0%)
+  Progress: 450/1000 (acc: 72.7%)
+  Progress: 460/1000 (acc: 73.3%)
+  Progress: 470/1000 (acc: 73.6%)
+  Progress: 480/1000 (acc: 73.5%)
+  Progress: 490/1000 (acc: 73.5%)
+  Progress: 500/1000 (acc: 73.6%)
+  Progress: 510/1000 (acc: 73.5%)
+  Progress: 520/1000 (acc: 73.5%)
+  Progress: 530/1000 (acc: 74.0%)
+  Progress: 540/1000 (acc: 73.1%)
+  Progress: 550/1000 (acc: 73.3%)
+  Progress: 560/1000 (acc: 73.6%)
+  Progress: 570/1000 (acc: 73.2%)
+  Progress: 580/1000 (acc: 73.1%)
+  Progress: 590/1000 (acc: 73.6%)
+  Progress: 600/1000 (acc: 73.5%)
+  Progress: 610/1000 (acc: 73.8%)
+  Progress: 620/1000 (acc: 73.9%)
+  Progress: 630/1000 (acc: 73.8%)
+  Progress: 640/1000 (acc: 73.6%)
+  Progress: 650/1000 (acc: 73.5%)
+  Progress: 660/1000 (acc: 73.6%)
+  Progress: 670/1000 (acc: 73.3%)
+  Progress: 680/1000 (acc: 73.4%)
+  Progress: 690/1000 (acc: 73.5%)
+  Progress: 700/1000 (acc: 73.6%)
+  Progress: 710/1000 (acc: 73.5%)
+  Progress: 720/1000 (acc: 73.8%)
+  Progress: 730/1000 (acc: 73.7%)
+  Progress: 740/1000 (acc: 73.8%)
+  Progress: 750/1000 (acc: 73.9%)
+  Progress: 760/1000 (acc: 73.7%)
+  Progress: 770/1000 (acc: 73.9%)
+  Progress: 780/1000 (acc: 74.0%)
+  Progress: 790/1000 (acc: 74.2%)
+  Progress: 800/1000 (acc: 73.9%)
+  Progress: 810/1000 (acc: 73.7%)
+  Progress: 820/1000 (acc: 73.7%)
+  Progress: 830/1000 (acc: 73.7%)
+  Progress: 840/1000 (acc: 74.0%)
+  Progress: 850/1000 (acc: 74.2%)
+  Progress: 860/1000 (acc: 74.3%)
+  Progress: 870/1000 (acc: 74.5%)
+  Progress: 880/1000 (acc: 74.1%)
+  Progress: 890/1000 (acc: 73.8%)
+  Progress: 900/1000 (acc: 73.6%)
+  Progress: 910/1000 (acc: 73.6%)
+  Progress: 920/1000 (acc: 73.5%)
+  Progress: 930/1000 (acc: 73.4%)
+  Progress: 940/1000 (acc: 73.3%)
+  Progress: 950/1000 (acc: 73.6%)
+  Progress: 960/1000 (acc: 73.5%)
+  Progress: 970/1000 (acc: 73.4%)
+  Progress: 980/1000 (acc: 73.7%)
+  Progress: 990/1000 (acc: 73.8%)
+  Progress: 1000/1000 (acc: 73.6%)
+  Zero-shot accuracy: 73.6% (736/1000)
+
+============================================================
+BASELINE: Local-Only (Client 0; ORDER_STRATEGY=similarity_ascending)
+============================================================
+  Progress: 10/1000 (acc: 30.0%)
+  Progress: 20/1000 (acc: 45.0%)
+  Progress: 30/1000 (acc: 53.3%)
+  Progress: 40/1000 (acc: 57.5%)
+  Progress: 50/1000 (acc: 58.0%)
+  Progress: 60/1000 (acc: 63.3%)
+  Progress: 70/1000 (acc: 64.3%)
+  Progress: 80/1000 (acc: 67.5%)
+  Progress: 90/1000 (acc: 67.8%)
+  Progress: 100/1000 (acc: 70.0%)
+  Progress: 110/1000 (acc: 70.0%)
+  Progress: 120/1000 (acc: 69.2%)
+  Progress: 130/1000 (acc: 70.8%)
+  Progress: 140/1000 (acc: 72.1%)
+  Progress: 150/1000 (acc: 70.7%)
+  Progress: 160/1000 (acc: 71.2%)
+  Progress: 170/1000 (acc: 70.6%)
+  Progress: 180/1000 (acc: 69.4%)
+  Progress: 190/1000 (acc: 70.0%)
+  Progress: 200/1000 (acc: 70.5%)
+  Progress: 210/1000 (acc: 71.4%)
+  Progress: 220/1000 (acc: 72.3%)
+  Progress: 230/1000 (acc: 71.7%)
+  Progress: 240/1000 (acc: 72.5%)
+  Progress: 250/1000 (acc: 72.8%)
+  Progress: 260/1000 (acc: 73.5%)
+  Progress: 270/1000 (acc: 73.0%)
+  Progress: 280/1000 (acc: 73.9%)
+  Progress: 290/1000 (acc: 73.1%)
+  Progress: 300/1000 (acc: 73.3%)
+  Progress: 310/1000 (acc: 73.5%)
+  Progress: 320/1000 (acc: 73.8%)
+  Progress: 330/1000 (acc: 73.9%)
+  Progress: 340/1000 (acc: 74.1%)
+  Progress: 350/1000 (acc: 74.6%)
+  Progress: 360/1000 (acc: 74.4%)
+  Progress: 370/1000 (acc: 74.1%)
+  Progress: 380/1000 (acc: 74.5%)
+  Progress: 390/1000 (acc: 74.1%)
+  Progress: 400/1000 (acc: 74.2%)
+  Progress: 410/1000 (acc: 73.9%)
+  Progress: 420/1000 (acc: 74.0%)
+  Progress: 430/1000 (acc: 74.2%)
+  Progress: 440/1000 (acc: 73.9%)
+  Progress: 450/1000 (acc: 73.8%)
+  Progress: 460/1000 (acc: 74.3%)
+  Progress: 470/1000 (acc: 74.7%)
+  Progress: 480/1000 (acc: 75.0%)
+  Progress: 490/1000 (acc: 75.1%)
+  Progress: 500/1000 (acc: 75.4%)
+  Progress: 510/1000 (acc: 75.3%)
+  Progress: 520/1000 (acc: 75.6%)
+  Progress: 530/1000 (acc: 75.8%)
+  Progress: 540/1000 (acc: 75.2%)
+  Progress: 550/1000 (acc: 75.1%)
+  Progress: 560/1000 (acc: 75.4%)
+  Progress: 570/1000 (acc: 75.3%)
+  Progress: 580/1000 (acc: 75.5%)
+  Progress: 590/1000 (acc: 75.9%)
+  Progress: 600/1000 (acc: 75.8%)
+  Progress: 610/1000 (acc: 76.1%)
+  Progress: 620/1000 (acc: 76.0%)
+  Progress: 630/1000 (acc: 75.9%)
+  Progress: 640/1000 (acc: 75.8%)
+  Progress: 650/1000 (acc: 75.7%)
+  Progress: 660/1000 (acc: 75.9%)
+  Progress: 670/1000 (acc: 75.8%)
+  Progress: 680/1000 (acc: 75.9%)
+  Progress: 690/1000 (acc: 76.1%)
+  Progress: 700/1000 (acc: 76.1%)
+  Progress: 710/1000 (acc: 75.9%)
+  Progress: 720/1000 (acc: 76.0%)
+  Progress: 730/1000 (acc: 76.0%)
+  Progress: 740/1000 (acc: 75.9%)
+  Progress: 750/1000 (acc: 76.0%)
+  Progress: 760/1000 (acc: 75.9%)
+  Progress: 770/1000 (acc: 76.1%)
+  Progress: 780/1000 (acc: 76.2%)
+  Progress: 790/1000 (acc: 76.3%)
+  Progress: 800/1000 (acc: 76.1%)
+  Progress: 810/1000 (acc: 75.8%)
+  Progress: 820/1000 (acc: 75.7%)
+  Progress: 830/1000 (acc: 75.9%)
+  Progress: 840/1000 (acc: 76.1%)
+  Progress: 850/1000 (acc: 76.0%)
+  Progress: 860/1000 (acc: 76.0%)
+  Progress: 870/1000 (acc: 76.3%)
+  Progress: 880/1000 (acc: 76.1%)
+  Progress: 890/1000 (acc: 76.0%)
+  Progress: 900/1000 (acc: 76.0%)
+  Progress: 910/1000 (acc: 76.0%)
+  Progress: 920/1000 (acc: 75.8%)
+  Progress: 930/1000 (acc: 75.7%)
+  Progress: 940/1000 (acc: 75.4%)
+  Progress: 950/1000 (acc: 75.7%)
+  Progress: 960/1000 (acc: 75.7%)
+  Progress: 970/1000 (acc: 75.8%)
+  Progress: 980/1000 (acc: 76.0%)
+  Progress: 990/1000 (acc: 76.2%)
+  Progress: 1000/1000 (acc: 75.9%)
+  Local-only accuracy: 75.9% (759/1000)
+
+============================================================
+FED-ICL EXPERIMENT
+  K=3  T=6  alpha=0.5
+  shots=3  selection=random  order=similarity_ascending
+  model=mistral  seed=42
+============================================================
+
+  Round 0 (random init): 22.0%
+
+  -- Round 1/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (27.8s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (29.6s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (32.9s).
+   → Round 1: 77.0% (77/100) [90.4s]
+
+  -- Round 2/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (26.9s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (30.1s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (31.9s).
+   → Round 2: 81.0% (81/100) [88.8s]
+
+  -- Round 3/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (26.8s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (29.1s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (32.2s).
+   → Round 3: 76.0% (76/100) [88.1s]
+
+  -- Round 4/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (28.1s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (29.0s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (32.5s).
+   → Round 4: 77.0% (77/100) [89.6s]
+
+  -- Round 5/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (26.6s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (29.6s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (32.8s).
+   → Round 5: 75.0% (75/100) [89.0s]
+
+  -- Round 6/6 --
+  Client 0: relabelling... done.
+  Client 0: predicting server queries... done (27.8s).
+  Client 1: relabelling... done.
+  Client 1: predicting server queries... done (29.1s).
+  Client 2: relabelling... done.
+  Client 2: predicting server queries... done (32.4s).
+   → Round 6: 78.0% (78/100) [89.2s]
+
+  -- Held-out test (1000 examples; ordering applied) --
+  Progress: 10/1000
+  Progress: 20/1000
+  Progress: 30/1000
+  Progress: 40/1000
+  Progress: 50/1000
+  Progress: 60/1000
+  Progress: 70/1000
+  Progress: 80/1000
+  Progress: 90/1000
+  Progress: 100/1000
+  Progress: 110/1000
+  Progress: 120/1000
+  Progress: 130/1000
+  Progress: 140/1000
+  Progress: 150/1000
+  Progress: 160/1000
+  Progress: 170/1000
+  Progress: 180/1000
+  Progress: 190/1000
+  Progress: 200/1000
+  Progress: 210/1000
+  Progress: 220/1000
+  Progress: 230/1000
+  Progress: 240/1000
+  Progress: 250/1000
+  Progress: 260/1000
+  Progress: 270/1000
+  Progress: 280/1000
+  Progress: 290/1000
+  Progress: 300/1000
+  Progress: 310/1000
+  Progress: 320/1000
+  Progress: 330/1000
+  Progress: 340/1000
+  Progress: 350/1000
+  Progress: 360/1000
+  Progress: 370/1000
+  Progress: 380/1000
+  Progress: 390/1000
+  Progress: 400/1000
+  Progress: 410/1000
+  Progress: 420/1000
+  Progress: 430/1000
+  Progress: 440/1000
+  Progress: 450/1000
+  Progress: 460/1000
+  Progress: 470/1000
+  Progress: 480/1000
+  Progress: 490/1000
+  Progress: 500/1000
+  Progress: 510/1000
+  Progress: 520/1000
+  Progress: 530/1000
+  Progress: 540/1000
+  Progress: 550/1000
+  Progress: 560/1000
+  Progress: 570/1000
+  Progress: 580/1000
+  Progress: 590/1000
+  Progress: 600/1000
+  Progress: 610/1000
+  Progress: 620/1000
+  Progress: 630/1000
+  Progress: 640/1000
+  Progress: 650/1000
+  Progress: 660/1000
+  Progress: 670/1000
+  Progress: 680/1000
+  Progress: 690/1000
+  Progress: 700/1000
+  Progress: 710/1000
+  Progress: 720/1000
+  Progress: 730/1000
+  Progress: 740/1000
+  Progress: 750/1000
+  Progress: 760/1000
+  Progress: 770/1000
+  Progress: 780/1000
+  Progress: 790/1000
+  Progress: 800/1000
+  Progress: 810/1000
+  Progress: 820/1000
+  Progress: 830/1000
+  Progress: 840/1000
+  Progress: 850/1000
+  Progress: 860/1000
+  Progress: 870/1000
+  Progress: 880/1000
+  Progress: 890/1000
+  Progress: 900/1000
+  Progress: 910/1000
+  Progress: 920/1000
+  Progress: 930/1000
+  Progress: 940/1000
+  Progress: 950/1000
+  Progress: 960/1000
+  Progress: 970/1000
+  Progress: 980/1000
+  Progress: 990/1000
+  Progress: 1000/1000
+  Held-out accuracy: 73.1% (731/1000)
+
+============================================================
+EXPERIMENT SUMMARY
+============================================================
+  model: mistral
+  num_clients: 3
+  num_rounds: 6
+  dirichlet_alpha: 0.5
+  num_shots: 3
+  num_server_queries: 100
+  eval_size: 1000
+  selection_strategy: random
+  order_strategy: similarity_ascending
+  seed: 42
+  client_pool_size: 250
+  client_pool_actual: 250
+  data_regime: canonical_full
+  filter_local_data: False
+  filter_c: 3
+  dataset: agnews
+
+  Round-by-round accuracy:
+   Round  0:  22.0% ██████
+   Round  1:  77.0% ███████████████████████ (90s)
+   Round  2:  81.0% ████████████████████████ (89s)
+   Round  3:  76.0% ██████████████████████ (88s)
+   Round  4:  77.0% ███████████████████████ (90s)
+   Round  5:  75.0% ██████████████████████ (89s)
+   Round  6:  78.0% ███████████████████████ (89s)
+
+  Baselines:
+   zero_shot           : 73.6%
+   local_only          : 75.9%
+
+  Held-out accuracy: 73.1%
+  In-sample R6 (server queries, n=100): 78.0%  <- paper's metric
+  Held-out  R6 (n=1000): 73.1%
+  Local-only (n=1000): 75.9%
+  Federation gain (held-out - local, matched): -2.8pp
+
+  Parse fallback rate: 2.6% (163/6300)
+  Total time: 535s
+============================================================
+
+Results saved to results_mistral_variant-fed_icl_alpha0.5_K3_T6_pool250_regime-canonical_full_filter0_C3_agnews_seed42_order-similarity_ascending.json
