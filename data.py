@@ -4,10 +4,11 @@ Fed-ICL Replication — Data Module (v2 - Harder Task)
 """
 
 import numpy as np
+from collections import defaultdict
 from datasets import load_dataset
 from numpy.random import seed
 from config import (SEED, DIRICHLET_ALPHA, NUM_CLIENTS, NUM_SERVER_QUERIES, EVAL_SIZE, CLIENT_POOL_SIZE, EVAL_SEED,
-                    DATA_REGIME, SPLIT_SEED, TEST_FRACTION, QUERY_SEED, DATASET, POOL_CAP)
+                    DATA_REGIME, SPLIT_SEED, TEST_FRACTION, QUERY_SEED, DATASET, POOL_CAP, FILTER_LOCAL_DATA)
 
 np.random.seed(SEED)
 
@@ -17,6 +18,14 @@ if DATASET == "dbpedia":
     _AG_NEWS_LABEL_MAP = {i: LABEL_SPACE[i] for i in range(len(LABEL_SPACE))}
     _HF_NAME = "fancyzhx/dbpedia_14"
     _TEXT_FIELDS = ("title", "content")      # joined into one text
+elif DATASET == "mmlu":
+    # Task label space is the four option letters. The 57 MMLU subjects are NOT
+    # the label space; they are the partition axis (see _prepare_mmlu), kept
+    # separate from prediction, parsing, and aggregation.
+    LABEL_SPACE = ["A", "B", "C", "D"]
+    _HF_NAME = "cais/mmlu"
+    _AG_NEWS_LABEL_MAP = None
+    _TEXT_FIELDS = None
 else:
     LABEL_SPACE = ["world", "sports", "business", "science"]
     _AG_NEWS_LABEL_MAP = {0: "world", 1: "sports", 2: "business", 3: "science"}
@@ -37,7 +46,7 @@ def _load_ag_news(num_examples, seed):
     return [(ds[int(i)]["text"], _AG_NEWS_LABEL_MAP[ds[int(i)]["label"]])
 for i in indices]
                     
-RAW_DATA = None if (DATA_REGIME in ("split8020", "canonical_full") or DATASET == "dbpedia") else _load_ag_news(
+RAW_DATA = None if (DATA_REGIME in ("split8020", "canonical_full") or DATASET in ("dbpedia", "mmlu")) else _load_ag_news(
     num_examples=NUM_SERVER_QUERIES + CLIENT_POOL_SIZE, seed=SEED)
 
 def _load_ag_news_test(num_examples, seed=EVAL_SEED):
@@ -75,6 +84,11 @@ def partition_data_dirichlet(data: list, num_clients: int, alpha: float):
         class_indices = np.where(labels == c)[0]
         np.random.shuffle(class_indices)
         proportions = np.random.dirichlet([alpha] * num_clients)
+        if not np.all(np.isfinite(proportions)):
+            # Inert at the alphas used for AG News; guards the alpha -> 0 limit
+            # where dirichlet underflows to NaN. One-hot = fully skewed split.
+            proportions = np.zeros(num_clients)
+            proportions[np.random.randint(num_clients)] = 1.0
         counts = (proportions * len(class_indices)).astype(int)
 
         if len(class_indices) >= num_clients:
@@ -209,7 +223,164 @@ def _prepare_canonical_full():
     return server_queries, client_datasets, eval_set
 
 
+def partition_by_subject_dirichlet(data: list, num_clients: int, alpha: float):
+    """Dirichlet partition over MMLU subjects: Wang et al.'s heterogeneity
+    construction for MMLU (Hsu et al., 2019). Mirrors partition_data_dirichlet
+    exactly, including the round-robin residual and the minimum-one rule, but
+    uses the subject as the categorical axis instead of the class label. AG News
+    and MMLU therefore share one partition algorithm on different keys.
+    """
+    subjects = sorted({ex.subject for ex in data})
+    subj_id = {s: i for i, s in enumerate(subjects)}
+    labels = np.array([subj_id[ex.subject] for ex in data])
+    num_classes = len(subjects)
+    client_data = [[] for _ in range(num_clients)]
+
+    for c in range(num_classes):
+        class_indices = np.where(labels == c)[0]
+        np.random.shuffle(class_indices)
+        proportions = np.random.dirichlet([alpha] * num_clients)
+        if not np.all(np.isfinite(proportions)):
+            # At very small alpha (the paper uses 0.001) the gamma draws underflow
+            # and dirichlet returns NaN. The alpha -> 0 limit is a fully skewed
+            # split, so assign this class entirely to one random client.
+            proportions = np.zeros(num_clients)
+            proportions[np.random.randint(num_clients)] = 1.0
+        counts = (proportions * len(class_indices)).astype(int)
+
+        if len(class_indices) >= num_clients:
+            for k in range(num_clients):
+                if counts[k] == 0:
+                    counts[k] = 1
+
+        deficit = len(class_indices) - int(counts.sum())
+        if deficit > 0:
+            start = np.random.randint(num_clients)
+            for offset in range(deficit):
+                counts[(start + offset) % num_clients] += 1
+        elif deficit < 0:
+            excess = -deficit
+            while excess > 0:
+                biggest = int(np.argmax(counts))
+                if counts[biggest] > 1:
+                    counts[biggest] -= 1
+                    excess -= 1
+                else:
+                    break
+
+        start = 0
+        for k in range(num_clients):
+            end = start + counts[k]
+            for idx in class_indices[start:end]:
+                client_data[k].append(data[idx])
+            start = end
+
+    for k in range(num_clients):
+        np.random.shuffle(client_data[k])
+    return client_data
+
+
+def _subject_stratified_indices(examples: list, n: int, seed_value: int):
+    """n indices into `examples`, drawn as evenly as possible across subjects.
+    Uses its own seeded RNG so query and eval draws stay decoupled from the
+    partition SEED, matching the AG News eval-decoupling discipline."""
+    rng = np.random.default_rng(seed_value)
+    by_subject = defaultdict(list)
+    for i, ex in enumerate(examples):
+        by_subject[ex.subject].append(i)
+    subjects = sorted(by_subject)
+    per, rem = divmod(n, len(subjects))
+    chosen = []
+    for j, s in enumerate(subjects):
+        k = per + (1 if j < rem else 0)
+        pool = by_subject[s]
+        k = min(k, len(pool))
+        chosen.extend(rng.choice(pool, size=k, replace=False).tolist())
+    rng.shuffle(chosen)
+    return [int(i) for i in chosen]
+
+
+def mean_pairwise_jsd(client_datasets: list, key_fn, categories: list) -> float:
+    """Realized heterogeneity: mean pairwise Jensen-Shannon divergence (base 2)
+    between clients' category distributions. Bounded in [0, 1] regardless of the
+    number of categories, so it is comparable across AG News (4 labels) and MMLU
+    (57 subjects). 0 means identical client distributions (IID); 1 means
+    disjoint supports. This is the honest cross-dataset heterogeneity axis, since
+    the Dirichlet alpha value is not comparable across different category counts.
+    """
+    cat_id = {c: i for i, c in enumerate(categories)}
+    dists = []
+    for cd in client_datasets:
+        v = np.zeros(len(categories))
+        for ex in cd:
+            v[cat_id[key_fn(ex)]] += 1
+        total = v.sum()
+        dists.append(v / total if total > 0 else v)
+
+    def _kl(a, b):
+        mask = a > 0
+        return float(np.sum(a[mask] * np.log2(a[mask] / b[mask])))
+
+    def _jsd(p, q):
+        m = 0.5 * (p + q)
+        return 0.5 * _kl(p, m) + 0.5 * _kl(q, m)
+
+    pairs = [_jsd(dists[i], dists[j])
+             for i in range(len(dists)) for j in range(i + 1, len(dists))]
+    return float(np.mean(pairs)) if pairs else 0.0
+
+
+def _prepare_mmlu():
+    """MMLU regime. Dirichlet-over-subjects client pool (paper's heterogeneity
+    construction), with server queries and a decoupled held-out eval carved
+    disjointly from the test split, mirroring canonical_full discipline."""
+    from mmlu_data import example_from_hf_row
+    ds = load_dataset(_HF_NAME, "all", split="test")
+    items = [example_from_hf_row(row) for row in ds]
+    subjects = sorted({ex.subject for ex in items})
+
+    # Disjoint carve: queries first, then eval from the remainder, then pool.
+    query_idx = _subject_stratified_indices(items, NUM_SERVER_QUERIES, QUERY_SEED)
+    qset = set(query_idx)
+    rem_idx = [i for i in range(len(items)) if i not in qset]
+    rem_items = [items[i] for i in rem_idx]
+    eval_rel = _subject_stratified_indices(rem_items, EVAL_SIZE, EVAL_SEED)
+    eval_idx = [rem_idx[i] for i in eval_rel]
+    eset = set(eval_idx)
+    pool_idx = [i for i in rem_idx if i not in eset]
+
+    server_queries = [items[i] for i in query_idx]
+    eval_set = [items[i] for i in eval_idx]
+    client_pool = [items[i] for i in pool_idx]
+    client_datasets = partition_by_subject_dirichlet(client_pool, NUM_CLIENTS, DIRICHLET_ALPHA)
+
+    het = mean_pairwise_jsd(client_datasets, lambda ex: ex.subject, subjects)
+
+    print("=" * 60); print("DATA DISTRIBUTION SUMMARY  (dataset=mmlu)"); print("=" * 60)
+    print(f"  Dataset: mmlu ({_HF_NAME}), {len(subjects)} subjects, labels {LABEL_SPACE}")
+    print(f"  Client pool: {len(client_pool)} of {len(items)} test items, Dirichlet-over-subjects across {NUM_CLIENTS} clients")
+    print(f"  Server queries: {len(server_queries)} (subject-stratified, QUERY_SEED={QUERY_SEED})")
+    print(f"  Held-out eval:  {len(eval_set)} (subject-stratified, EVAL_SEED={EVAL_SEED}), disjoint from queries and pool")
+    print(f"  Dirichlet alpha: {DIRICHLET_ALPHA}   partition SEED={SEED}")
+    print(f"  Realized heterogeneity (mean pairwise JS divergence over subjects, base 2): {het:.3f}  [0=IID, 1=disjoint]")
+    for k, cd in enumerate(client_datasets):
+        top = defaultdict(int)
+        for ex in cd:
+            top[ex.subject] += 1
+        n_subj_k = len(top)
+        print(f"  Client {k}: {len(cd)} items across {n_subj_k} subjects")
+    print("=" * 60)
+    return server_queries, client_datasets, eval_set
+
+
 def prepare_experiment():
+    if DATASET == "mmlu":
+        if not FILTER_LOCAL_DATA:
+            raise SystemExit(
+                "MMLU requires FED_ICL_FILTER=1 (paper's Algorithm 2 kNN filtering). "
+                "Without it, relabelling the full subject-partitioned pool is far too many LLM calls."
+            )
+        return _prepare_mmlu()
     if DATASET == "dbpedia" and DATA_REGIME != "canonical_full":
         raise SystemExit("DBpedia is only wired for FED_ICL_REGIME=canonical_full.")
     if DATA_REGIME == "canonical_full":

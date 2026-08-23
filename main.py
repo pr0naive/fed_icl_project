@@ -12,6 +12,7 @@ from config import (
 from data import prepare_experiment, LABEL_SPACE
 from federation import FedICLClient, FedICLServer
 from llm import check_ollama_ready, predict_with_icl, get_parse_stats
+import task
 
 np.random.seed(SEED)
 
@@ -21,12 +22,20 @@ def run_baseline_zero_shot(eval_set: list) -> float:
     print("BASELINE: Zero-Shot")
     print("=" * 60)
     correct = 0
-    for i, (text, true_label) in enumerate(eval_set):
-        pred = predict_with_icl([], text)
-        if pred == true_label:
-            correct += 1
-        if (i + 1) % 10 == 0:
-            print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
+    if DATASET == "mmlu":
+        for i, item in enumerate(eval_set):
+            pred = predict_with_icl([], item)
+            if pred == task.true_label(item):
+                correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
+    else:
+        for i, (text, true_label) in enumerate(eval_set):
+            pred = predict_with_icl([], text)
+            if pred == true_label:
+                correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
     accuracy = correct / len(eval_set)
     print(f"  Zero-shot accuracy: {accuracy:.1%} ({correct}/{len(eval_set)})")
     return accuracy
@@ -41,14 +50,24 @@ def run_baseline_local_only(client_datasets: list, eval_set: list, server_querie
     if FILTER_LOCAL_DATA and server_queries is not None:
         client.filter_local_data(server_queries, FILTER_C)   # paper-faithful: baseline uses the filtered pool too
     correct = 0
-    for i, (text, true_label) in enumerate(eval_set):
-        examples = client.select_examples(text, client.local_data, NUM_SHOTS)
-        examples = client.order_examples(examples, text)
-        pred = predict_with_icl(examples, text, model=MODEL_NAME)
-        if pred == true_label:
-            correct += 1
-        if (i + 1) % 10 == 0:
-            print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
+    if DATASET == "mmlu":
+        for i, item in enumerate(eval_set):
+            examples = client.select_examples(item, client.local_data, NUM_SHOTS)
+            examples = client.order_examples(examples, item)
+            pred = predict_with_icl(examples, item, model=MODEL_NAME)
+            if pred == task.true_label(item):
+                correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
+    else:
+        for i, (text, true_label) in enumerate(eval_set):
+            examples = client.select_examples(text, client.local_data, NUM_SHOTS)
+            examples = client.order_examples(examples, text)
+            pred = predict_with_icl(examples, text, model=MODEL_NAME)
+            if pred == true_label:
+                correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)} (acc: {correct/(i+1):.1%})")
     accuracy = correct / len(eval_set)
     print(f"  Local-only accuracy: {accuracy:.1%} ({correct}/{len(eval_set)})")
     return accuracy
@@ -132,14 +151,24 @@ def run_fed_icl(server_queries, client_datasets, eval_set) -> dict:
     final_context = server.get_global_context()
     final_client  = FedICLClient(client_id=-1, local_data=final_context, model=MODEL_NAME)
     eval_correct = 0
-    for i, (text, true_label) in enumerate(eval_set):
-        ex = final_client.select_examples(text, final_context, NUM_SHOTS)
-        ex = final_client.order_examples(ex, text)
-        pred = predict_with_icl(ex, text, model=MODEL_NAME)
-        if pred == true_label:
-            eval_correct += 1
-        if (i + 1) % 10 == 0:
-            print(f"  Progress: {i+1}/{len(eval_set)}", flush=True)
+    if DATASET == "mmlu":
+        for i, item in enumerate(eval_set):
+            ex = final_client.select_examples(item, final_context, NUM_SHOTS)
+            ex = final_client.order_examples(ex, item)
+            pred = predict_with_icl(ex, item, model=MODEL_NAME)
+            if pred == task.true_label(item):
+                eval_correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)}", flush=True)
+    else:
+        for i, (text, true_label) in enumerate(eval_set):
+            ex = final_client.select_examples(text, final_context, NUM_SHOTS)
+            ex = final_client.order_examples(ex, text)
+            pred = predict_with_icl(ex, text, model=MODEL_NAME)
+            if pred == true_label:
+                eval_correct += 1
+            if (i + 1) % 10 == 0:
+                print(f"  Progress: {i+1}/{len(eval_set)}", flush=True)
     eval_accuracy = eval_correct / len(eval_set)
     print(f"  Held-out accuracy: {eval_accuracy:.1%} ({eval_correct}/{len(eval_set)})")
 
