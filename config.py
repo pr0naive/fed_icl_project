@@ -10,6 +10,8 @@ MODEL_NAME = os.environ.get("FED_ICL_MODEL", "mistral")           # Ollama model
 OLLAMA_HOST = os.environ.get("FED_ICL_HOST", "http://localhost:11434")
 TEMPERATURE = 0.0               # 0 = deterministic outputs (reproducible)
 MAX_TOKENS = 10                 # Short - we only need a category label
+# MMLU: weak models reason before the letter, so allow more room. Env-tunable.
+MMLU_MAX_TOKENS = int(os.environ.get("FED_ICL_MMLU_MAX_TOKENS", 64))
 
 # Federation variant (Wang et al., Appendix C.3)
 FED_VARIANT = os.environ.get("FED_ICL_VARIANT", "fed_icl")

@@ -8,7 +8,7 @@ Updated for 4-class news topic classification.
 import requests
 import re
 import time
-from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS, DATASET
+from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS, MMLU_MAX_TOKENS, DATASET
 from data import LABEL_SPACE
 from mmlu_data import build_prompt as _mmlu_build_prompt, parse_letter as _mmlu_parse_letter
 
@@ -34,6 +34,13 @@ def build_icl_prompt(examples: list, query_text) -> str:
 
 def query_ollama(prompt: str, model: str = None, max_retries: int = 2) -> str:
     model = model or MODEL_NAME
+    options = {"temperature": TEMPERATURE, "num_predict": MAX_TOKENS}
+    if DATASET == "mmlu":
+        # Weak models reason before committing; give room to reach the letter,
+        # and stop if they roll into a fresh "Question:" block (pattern echo),
+        # since nothing after that is an answer to the current query.
+        options["num_predict"] = MMLU_MAX_TOKENS
+        options["stop"] = ["\nQuestion:"]
     for attempt in range(max_retries + 1):
         try:
             resp = requests.post(
@@ -42,10 +49,7 @@ def query_ollama(prompt: str, model: str = None, max_retries: int = 2) -> str:
                     "model": model,
                     "prompt": prompt,
                     "stream": False,
-                    "options": {
-                        "temperature": TEMPERATURE,
-                        "num_predict": MAX_TOKENS,
-                    }
+                    "options": options,
                 },
                 timeout=120,
             )
