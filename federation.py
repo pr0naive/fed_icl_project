@@ -6,7 +6,8 @@ Implements Fed-ICL (Wang et al., ICML 2025) with support for example ordering ex
 
 import numpy as np
 from collections import Counter
-from config import NUM_SHOTS, SELECTION_STRATEGY, ORDER_STRATEGY, SEED, FED_VARIANT
+from config import NUM_SHOTS, SELECTION_STRATEGY, ORDER_STRATEGY, SEED, FED_VARIANT, DATASET
+import task
 
 np.random.seed(SEED)
 
@@ -72,8 +73,8 @@ class FedICLClient:
         if len(self.local_data) <= C:
             return
         before = len(self.local_data)
-        pool_vecs  = _embed([t for t, _ in self.local_data])
-        query_vecs = _embed([q for q, _ in server_queries])
+        pool_vecs  = _embed([task.embed_text(it) for it in self.local_data])
+        query_vecs = _embed([task.embed_text(q) for q in server_queries])
         keep = set()
         for qv in query_vecs:
             scores = pool_vecs @ qv
@@ -90,8 +91,8 @@ class FedICLClient:
             """ Paper-faithful kNN (Wang et al., Algorithm 2): cosine
              similarity in paraphrase-MiniLM-L6-v2 space. Vectors are
              normalised, so dot product == cosine similarity."""
-            pool_vecs = _embed([text for text, _ in pool])
-            query_vec = _embed([query_text])[0]
+            pool_vecs = _embed([task.embed_text(it) for it in pool])
+            query_vec = _embed([task.embed_query(query_text)])[0]
             scores = pool_vecs @ query_vec
             top_indices = np.argsort(scores)[-n:]
             selected = [pool[i] for i in top_indices]
@@ -104,10 +105,10 @@ class FedICLClient:
             """ Lexical word-overlap. Documented deviation kept as an ablation
              arm; the paper's method is "similarity_embedding" above. """
 
-            query_words = set(query_text.lower().split())
+            query_words = set(task.embed_query(query_text).lower().split())
             scores = []
-            for text, label in pool:
-                example_words = set(text.lower().split())
+            for it in pool:
+                example_words = set(task.embed_text(it).lower().split())
                 scores.append(len(query_words & example_words))
             top_indices = np.argsort(scores)[-n:]
             selected = [pool[i] for i in top_indices]
@@ -119,23 +120,23 @@ class FedICLClient:
         indices = np.random.choice(len(pool), size=n, replace=False)
         return [pool[i] for i in indices]
 
-    def order_examples(self, examples: list, query_text: str) -> list:
+    def order_examples(self, examples: list, query_text) -> list:
         ex = list(examples)  # do not mutate caller's list
         if ORDER_STRATEGY == "original":
             return ex
         elif ORDER_STRATEGY == "similarity_ascending":
-            query_words = set(query_text.lower().split())
-            return sorted(ex, key=lambda x: len(set(x[0].lower().split()) & query_words))
+            query_words = set(task.embed_query(query_text).lower().split())
+            return sorted(ex, key=lambda x: len(set(task.embed_text(x).lower().split()) & query_words))
         elif ORDER_STRATEGY == "similarity_descending":
-            query_words = set(query_text.lower().split())
-            return sorted(ex, key=lambda x: len(set(x[0].lower().split()) & query_words), reverse=True)
+            query_words = set(task.embed_query(query_text).lower().split())
+            return sorted(ex, key=lambda x: len(set(task.embed_text(x).lower().split()) & query_words), reverse=True)
         elif ORDER_STRATEGY == "label_grouped":
-            return sorted(ex, key=lambda x: x[1])
+            return sorted(ex, key=lambda x: task.true_label(x))
         elif ORDER_STRATEGY == "label_alternating":
             from collections import defaultdict
             by_label = defaultdict(list)
             for e in ex:
-                by_label[e[1]].append(e)
+                by_label[task.true_label(e)].append(e)
             result = []
             while any(by_label.values()):
                 for label in sorted(by_label.keys()):
@@ -151,6 +152,17 @@ class FedICLClient:
     def relabel_local_data(self, global_context: list):
         from llm import predict_with_icl
         self.relabelled_data = []
+        if DATASET == "mmlu":
+            for item in self.local_data:
+                examples = self.select_examples(item, global_context, NUM_SHOTS)
+                examples = self.order_examples(examples, item)
+                predicted_label = predict_with_icl(examples, item, model=self.model)
+                # None (unparseable): drop for this round, never store a guess.
+                # Pseudo-label noise (true vs predicted) can be measured here
+                # later: the original item still carries the true answer.
+                if predicted_label is not None:
+                    self.relabelled_data.append(task.with_label(item, predicted_label))
+            return
         for text, original_label in self.local_data:
             examples = self.select_examples(text, global_context, NUM_SHOTS)
             examples = self.order_examples(examples, text)
@@ -174,6 +186,14 @@ class FedICLClient:
             example_pool = self.local_data
 
         predictions = []
+        if DATASET == "mmlu":
+            for q in server_queries:
+                examples = self.select_examples(q, example_pool, NUM_SHOTS)
+                examples = self.order_examples(examples, q)
+                predicted_label = predict_with_icl(examples, q, model=self.model)
+                predictions.append((task.item_id(q), predicted_label))
+            return predictions
+
         for query_text, _ in server_queries:
             examples = self.select_examples(query_text, example_pool, NUM_SHOTS)
             examples = self.order_examples(examples, query_text)
@@ -186,12 +206,15 @@ class FedICLClient:
 class FedICLServer:
     def __init__(self, server_queries: list):
         self.queries = server_queries
-        self.true_labels = {text: label for text, label in server_queries}
+        self.true_labels = {task.item_id(q): task.true_label(q) for q in server_queries}
 
         from data import LABEL_SPACE
+        # Random-init pseudo-label per query. with_label carries it on the item,
+        # so an MMLU global-context entry still renders its four options as a
+        # demonstration. For AG News this is identical to (text, random_label).
         self.global_context = [
-            (text, np.random.choice(LABEL_SPACE))
-            for text, _ in server_queries
+            task.with_label(q, np.random.choice(LABEL_SPACE))
+            for q in server_queries
         ]
         # Tie-breaking for majority vote (Eq. 5 argmax is not unique on
         # ties; the paper does not specify a rule). Seeded RNG, independent
@@ -208,7 +231,7 @@ class FedICLServer:
         new_context = []
         round_ties = 0
         for q_idx in range(len(self.queries)):
-            query_text = self.queries[q_idx][0]
+            q = self.queries[q_idx]
             votes = []
             for client_preds in all_client_predictions:
                 if q_idx < len(client_preds):
@@ -230,9 +253,9 @@ class FedICLServer:
                     round_ties += 1
             else:
                 # All votes unparseable: retain the previous round's label.
-                aggregated_label = self.global_context[q_idx][1]
+                aggregated_label = task.true_label(self.global_context[q_idx])
 
-            new_context.append((query_text, aggregated_label))
+            new_context.append(task.with_label(q, aggregated_label))
 
         self.global_context = new_context
         self.tie_count += round_ties
@@ -243,8 +266,9 @@ class FedICLServer:
         total = len(self.global_context)
         per_class = {}
 
-        for text, predicted_label in self.global_context:
-            true_label = self.true_labels[text]
+        for entry in self.global_context:
+            predicted_label = task.true_label(entry)   # entry carries the aggregated pseudo-answer
+            true_label = self.true_labels[task.item_id(entry)]
             if true_label not in per_class:
                 per_class[true_label] = {"correct": 0, "total": 0}
             per_class[true_label]["total"] += 1

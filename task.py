@@ -25,6 +25,15 @@ if DATASET == "mmlu":
         """Text handed to the kNN embedder: the question stem only."""
         return embedding_text(item)
 
+    def embed_query(query) -> str:
+        """Embedding text for the query passed into select/order.
+
+        In the MMLU branch the query is a full MMLUExample (same shape as a pool
+        item), so this is embed_text. It stays a separate name because the
+        AG News branch receives a bare string here, not an item.
+        """
+        return embedding_text(query)
+
     def true_label(item) -> str:
         """Ground-truth label as a letter."""
         return item.answer_letter
@@ -47,6 +56,10 @@ if DATASET == "mmlu":
 else:
     def embed_text(item) -> str:
         return item[0]
+
+    def embed_query(query) -> str:
+        # AG News passes a bare query string into select/order, not an item.
+        return query
 
     def true_label(item) -> str:
         return item[1]

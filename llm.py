@@ -10,10 +10,16 @@ import re
 import time
 from config import MODEL_NAME, OLLAMA_HOST, TEMPERATURE, MAX_TOKENS, DATASET
 from data import LABEL_SPACE
+from mmlu_data import build_prompt as _mmlu_build_prompt, parse_letter as _mmlu_parse_letter
 
 _PARSE_STATS = {"total": 0, "fallback": 0, "examples": []}
 
-def build_icl_prompt(examples: list, query_text: str) -> str:
+def build_icl_prompt(examples: list, query_text) -> str:
+    if DATASET == "mmlu":
+        # examples are MMLUExample demonstrations; query_text is the query
+        # MMLUExample (name kept for signature stability). build_prompt renders
+        # each with its own four options and leaves the query answer open.
+        return _mmlu_build_prompt(examples, query_text)
     labels = ", ".join(f'"{l}"' for l in LABEL_SPACE)
     noun  = "text" if DATASET == "dbpedia" else "news headline"
     field = "Text" if DATASET == "dbpedia" else "Headline"
@@ -58,24 +64,31 @@ def query_ollama(prompt: str, model: str = None, max_retries: int = 2) -> str:
 
 def parse_label(raw_response: str) -> str:
     _PARSE_STATS["total"] += 1
-    text = raw_response.lower().strip().strip(".,!\"'")
-    tokens = [t for t in re.split(r"[\s.,!?:;]+", text) if t]
 
-    # Strictest: the very first token IS a label.
-    if tokens and tokens[0] in LABEL_SPACE:
-        return tokens[0]
+    if DATASET == "mmlu":
+        result = _mmlu_parse_letter(raw_response)
+    else:
+        text = raw_response.lower().strip().strip(".,!\"'")
+        tokens = [t for t in re.split(r"[\s.,!?:;]+", text) if t]
+        result = None
+        # Strictest: the very first token IS a label.
+        if tokens and tokens[0] in LABEL_SPACE:
+            result = tokens[0]
+        else:
+            # Less strict: any standalone token equals a label.
+            for tok in tokens:
+                if tok in LABEL_SPACE:
+                    result = tok
+                    break
 
-    # Less strict: any standalone token equals a label.
-    for tok in tokens:
-        if tok in LABEL_SPACE:
-            return tok
-
-    # Fallback: return None (sentinel). Returning LABEL_SPACE[0] silently inflated 'world' recall and injected wrong labels into relabelled_data.
-    # Callers must treat None as: incorrect in evaluation, excluded from relabelled pools, and excluded from server votes.
-    _PARSE_STATS["fallback"] += 1
-    if len(_PARSE_STATS["examples"]) < 30:
-        _PARSE_STATS["examples"].append(raw_response[:120])
-    return None
+    # Fallback: None (sentinel). Returning a default label silently injected
+    # wrong labels into relabelled_data. Callers must treat None as: incorrect
+    # in evaluation, excluded from relabelled pools, excluded from server votes.
+    if result is None:
+        _PARSE_STATS["fallback"] += 1
+        if len(_PARSE_STATS["examples"]) < 30:
+            _PARSE_STATS["examples"].append(raw_response[:120])
+    return result
 
 def get_parse_stats():
     total = _PARSE_STATS["total"]
