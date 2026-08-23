@@ -89,17 +89,26 @@ def embedding_text(ex: MMLUExample, include_options: bool = False) -> str:
     return ex.question
 
 
+_INSTRUCTION = (
+    "Answer the following multiple-choice question. "
+    "Respond with only the single letter (A, B, C, or D) of the correct option, "
+    "and nothing else.\n\n"
+)
+
+
 def build_prompt(demonstrations: Sequence[MMLUExample], query: MMLUExample) -> str:
     """
-    Assemble the full ICL prompt: ordered demonstrations, then the query.
+    Assemble the full ICL prompt: an instruction, ordered demonstrations, then
+    the query.
 
-    Ordering of `demonstrations` is the independent variable in the ordering
-    sweep, so this preserves the given order exactly and performs no sorting of
-    its own.
+    The instruction constrains weak models (e.g. phi3) that otherwise reason
+    aloud and never emit a bare letter within the token budget. Ordering of
+    `demonstrations` is the independent variable in the ordering sweep, so this
+    preserves the given order exactly and performs no sorting of its own.
     """
     parts = [serialize_demonstration(d, include_answer=True) for d in demonstrations]
     parts.append(serialize_demonstration(query, include_answer=False))
-    return "\n\n".join(parts)
+    return _INSTRUCTION + "\n\n".join(parts)
 
 
 # Explicit "the answer is X" style statements, highest precision.
