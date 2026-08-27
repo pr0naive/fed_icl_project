@@ -9,12 +9,9 @@ __pycache__/
 .continue/
 .vscode/
 .idea/
-# Experimental results — keep saturation evidence, ignore future ones
-results.json
-results_*.json
-!results_synthetic_saturation_evidence.json
-!results_agnews_baseline_n100.json
-!results_agnews_baseline_n100_updated.json
-!results_llama3_alpha0.5_K3_T6_seed42_order-original.json
+# The curated result archive lives in results/ and IS tracked.
+# Only ignore stray result files written to the repo root by main.py.
+/results.json
+/results_*.json
 # HuggingFace cache (if used locally)
 .cache/
