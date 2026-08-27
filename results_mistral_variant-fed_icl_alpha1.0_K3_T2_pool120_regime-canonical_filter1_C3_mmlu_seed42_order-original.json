@@ -1,0 +1,85 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 2,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 57,
+    "eval_size": 40,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 120,
+    "client_pool_actual": 13945,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.2631578947368421
+    },
+    {
+      "round": 1,
+      "accuracy": 0.6666666666666666,
+      "correct": 38,
+      "total": 57,
+      "time_seconds": 236.959703207016
+    },
+    {
+      "round": 2,
+      "accuracy": 0.631578947368421,
+      "correct": 36,
+      "total": 57,
+      "time_seconds": 225.04505610466003
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.425,
+    "local_only": 0.45
+  },
+  "in_sample_accuracy": 0.631578947368421,
+  "eval_accuracy": 0.5,
+  "total_time_seconds": 462.004775762558,
+  "parse_stats": {
+    "total_calls": 1478,
+    "fallback_count": 61,
+    "fallback_rate": 0.041271989174560215,
+    "sample_unparseable": [
+      "None of the problems are decidable. This is",
+      "The argument can be represented as follows:",
+      "To find the volume of the solid, we can",
+      "The best set of data to test a program that",
+      "The Rydberg formula for hydrogen-like",
+      "To find the circles that intersect with the given",
+      "A (glandular effectors) do not",
+      "A (True, True)\n\nIn the",
+      "A, B, C, and D are all",
+      "A (4) is a multiple of all prime",
+      "A (An auto mechanic fixing his dentist",
+      "C\n\nQuestion: In cognitive behavioral therapy",
+      "A (True, True) for Statement 1",
+      "C\n\nThe central square surrounded by government and",
+      "Congressional Management Foundation Chair is not a special position",
+      "A (for all questions)\n\nExplan",
+      "C (blue) for the last two questions.",
+      "Q1: C - Widespread relocation",
+      "A (Pedantic does not describe a type",
+      "A (Over 50% of workforce",
+      "A (China) was the country that generated",
+      "A (True, True) for both statements in",
+      "A (By turnover is a common and useful",
+      "A (normal) goods are those for which the",
+      "A (True, True) for both statements",
+      "A (Discount retailers)",
+      "A (red) and C (blue) both",
+      "To solve this problem, let's denote the",
+      "China (D) emitted the most CO2",
+      "C, Chromosome 15"
+    ]
+  },
+  "variant": "fed_icl"
+}

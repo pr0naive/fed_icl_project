@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 100.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 13,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.30701754385964913
+    },
+    {
+      "round": 1,
+      "accuracy": 0.631578947368421,
+      "correct": 72,
+      "total": 114,
+      "time_seconds": 470.0009229183197
+    },
+    {
+      "round": 2,
+      "accuracy": 0.6403508771929824,
+      "correct": 73,
+      "total": 114,
+      "time_seconds": 465.28326964378357
+    },
+    {
+      "round": 3,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 469.2033019065857
+    },
+    {
+      "round": 4,
+      "accuracy": 0.6403508771929824,
+      "correct": 73,
+      "total": 114,
+      "time_seconds": 480.8466172218323
+    },
+    {
+      "round": 5,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 489.209912776947
+    },
+    {
+      "round": 6,
+      "accuracy": 0.6403508771929824,
+      "correct": 73,
+      "total": 114,
+      "time_seconds": 486.38772320747375
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.577,
+    "local_only": 0.432
+  },
+  "in_sample_accuracy": 0.6403508771929824,
+  "eval_accuracy": 0.429,
+  "total_time_seconds": 2860.9317870140076,
+  "parse_stats": {
+    "total_calls": 10698,
+    "fallback_count": 3389,
+    "fallback_rate": 0.3167881847074219,
+    "sample_unparseable": [
+      "A, B, C (all three options are correct as they all describe different ways societies can be threatened)",
+      "D (D)",
+      "A (since A and B are mutually exclusive, P(A \u222a B) = P(A) + P(B) = 0.3 + 0.2 = 0.5)",
+      "C\n\nExplanation: Positive cross-price elasticity of demand indicates that a change in the price of one good leads to an i",
+      "C (Work sample)",
+      "A (Hepatomegaly is not caused by emphysema)",
+      "C (Progressive Liberals)",
+      "D (Leo) is not located along the Milky Way in the sky. The other three, Perseus, Cygnus, and Scorpius, are all part of t",
+      "B (Atrial Septal Defect)",
+      "B\n\nThe passage by Marcus Garvey expresses a call for self-determination and autonomy for Africans, which aligns with the",
+      "A (Double shelled icosahedron) is incorrect. The Dane particle is not a structure found in biology. It's a type of virus",
+      "A (Wednesday)",
+      "To solve this problem, we can use the following formulas for mean and standard deviation in a normal distribution:\n\nMean",
+      "D\n\nHere's the reasoning behind this:\n\nLet the two positive integers be x and y, where x < y. The least common multiple (",
+      "D (Touch, pinch, grasp)",
+      "A (Decline in the appeal of religions of salvation)",
+      "A (Take fewer medications)",
+      "A (overjustification hypothesis)",
+      "A (Interpersonal)",
+      "C (It encourages stability of the regime)",
+      "A (Stationary process)",
+      "A (1 in 10)",
+      "A (for the first question)\nA (for the second question)\nD (for the third question)\nA (for the fourth question)",
+      "A (context-free grammar) is used to specify the syntax or structure of a programming language, while the other options a",
+      "A (1/2)",
+      "A\nA\nB\nD",
+      "D (Primate city)\n\nFor the other questions, the answers are:\n\nQuestion 1: A (the Adena)\nQuestion 2: B (The Amazon Basin)\n",
+      "A (The force of the elevator cable on the man)",
+      "B, 197 and 197 (since the sum of 153 and 44 is exactly 197)",
+      "A (0)"
+    ]
+  },
+  "variant": "fed_icl"
+}

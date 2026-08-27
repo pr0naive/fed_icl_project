@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 99,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.22807017543859648
+    },
+    {
+      "round": 1,
+      "accuracy": 0.5789473684210527,
+      "correct": 66,
+      "total": 114,
+      "time_seconds": 421.7664303779602
+    },
+    {
+      "round": 2,
+      "accuracy": 0.5877192982456141,
+      "correct": 67,
+      "total": 114,
+      "time_seconds": 414.22994017601013
+    },
+    {
+      "round": 3,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 414.09890127182007
+    },
+    {
+      "round": 4,
+      "accuracy": 0.5789473684210527,
+      "correct": 66,
+      "total": 114,
+      "time_seconds": 409.587699174881
+    },
+    {
+      "round": 5,
+      "accuracy": 0.6052631578947368,
+      "correct": 69,
+      "total": 114,
+      "time_seconds": 416.07839179039
+    },
+    {
+      "round": 6,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 421.848429441452
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.629,
+    "local_only": 0.458
+  },
+  "in_sample_accuracy": 0.5964912280701754,
+  "eval_accuracy": 0.479,
+  "total_time_seconds": 2497.6098346710205,
+  "parse_stats": {
+    "total_calls": 10704,
+    "fallback_count": 2052,
+    "fallback_rate": 0.19170403587443946,
+    "sample_unparseable": [
+      "A, B, C",
+      "There is no accurate answer to this question, as it implies a specific belief among American citizens at that time which",
+      "To determine which day of the week April begins on in February 2011 without using any direct calendar references or date",
+      "No change occurred as a direct result of these practices according to this passage; rather, colonial officials often col",
+      "None of the above directly reflects the tone, as it is more poetic and metapclitic rather than a direct mode of religiou",
+      "To find the center $(a, b)$ and the radius $r$ of the circle given by its equation in general form, we first need to rew",
+      "Question: What does the term \"unit root\" refer to in time series analysis?\nA. A constant value that represents growth ov",
+      "Question: A rubber ball (mass = 0.08 kg) is dropped from a height of 3.2 m, and after bouncing off the floor, rises almo",
+      "To find the number of abelian groups with a given order, we factorize the order into prime factors and use the Fundament",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "Question: Which of the following is not an abnormal breathing pattern seen in head injury and altered conscious level?\nA",
+      "S",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "A D",
+      "None of the above, as none are standard terms for output from a hash function; typically it's referred to simply as \"has",
+      "Question: Which dietary component is most strongly associated with accelerated cognitive decline?\nA. High glycaemic inde",
+      "None of these options accurately describe an \"American multiplication table.\" The term seems to be a misnomer or confusi",
+      "Question: A local bakery makes two types of pastries, croissants and muffins. The cost to make a batch of croissants is ",
+      "To find the answer, we can solve this system of equations using elimination or substitution methods to first determine x",
+      "Question: The migration streams into the United States between 1980 and the present have been primarily composed of emig",
+      "Question: Which statement best describes the nature and function of Kelsen's Grundnorm?\nA. The ultimate source of a lega",
+      "Question: Which of the following theories is based on the notion that mitochondria and chloroplasts evolved from prokary",
+      "Question: The ability for firms to enter and exit a market over time means that\nA. the marginal cost is zero\nB. the marg",
+      "Question: Statement 1 | In any group (G), the set of all elements that commute with a given element forms a subgroup cal",
+      "",
+      "Question: Which statement about the genetic condition Turner syndrome is true?\nA. It always results in severe physical a",
+      "Question: Which of the following are plausible approaches to dealing with heteroscedasticity in regression analysis? Sel",
+      "Question: Which of the following best describes an abnormality in which one or more bones fracture due to minimal trauma",
+      "Question: In genome-wide association studies, known SNPs explain ______ of the variation in body mass index despite the ",
+      "Question: A committee of middle school teachers is meeting to begin the process of finding a software program to improve"
+    ]
+  },
+  "variant": "fed_icl"
+}

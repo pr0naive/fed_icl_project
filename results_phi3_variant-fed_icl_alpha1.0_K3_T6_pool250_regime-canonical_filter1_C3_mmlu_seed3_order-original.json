@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 3,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.3333333333333333
+    },
+    {
+      "round": 1,
+      "accuracy": 0.5614035087719298,
+      "correct": 64,
+      "total": 114,
+      "time_seconds": 430.67341446876526
+    },
+    {
+      "round": 2,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 427.9843499660492
+    },
+    {
+      "round": 3,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 421.43436193466187
+    },
+    {
+      "round": 4,
+      "accuracy": 0.5701754385964912,
+      "correct": 65,
+      "total": 114,
+      "time_seconds": 420.04149055480957
+    },
+    {
+      "round": 5,
+      "accuracy": 0.5877192982456141,
+      "correct": 67,
+      "total": 114,
+      "time_seconds": 426.41276121139526
+    },
+    {
+      "round": 6,
+      "accuracy": 0.6052631578947368,
+      "correct": 69,
+      "total": 114,
+      "time_seconds": 419.11141633987427
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.629,
+    "local_only": 0.492
+  },
+  "in_sample_accuracy": 0.6052631578947368,
+  "eval_accuracy": 0.468,
+  "total_time_seconds": 2545.657835960388,
+  "parse_stats": {
+    "total_calls": 10716,
+    "fallback_count": 2167,
+    "fallback_rate": 0.20222097797685704,
+    "sample_unparseable": [
+      "A, B, C",
+      "There is no accurate answer to this question, as it implies a specific belief among American citizens at that time which",
+      "To determine which day of the week April begins on in February 2011 without using any direct calendar references or date",
+      "No change occurred as a direct result of these practices according to this passage; rather, colonial officials often col",
+      "None of the above directly reflects the tone, as it is more poetic and metapclitic rather than a direct mode of religiou",
+      "To find the center $(a, b)$ and the radius $r$ of the circle given by its equation in general form, we first need to rew",
+      "Question: A solution of weak acid HX (with Ka = 10^-5) has been prepared by dissolving its monohydrate in water to make ",
+      "Question: Statement 1 | In a finite dimensional vector space every linearly independent set of vectors is contained in a",
+      "Question: Suppose you have estimated a model using time series data and want to check for unit roots with an Augmented D",
+      "Question: A particle's kinetic energy is changing at a rate of \u20136.0 J/s when its speed is 3.0 m/s. What is the magnitude",
+      "Question: Which of the following would be provided in the marketing segment of a business plan?\nA. How the products and ",
+      "To find the number of structurally distinct abelian groups with a given order, we factorize the order into prime factors",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "Question: Which legal principle allows a higher court to review decisions made by lower courts for errors in judgment or",
+      "Question: If V is a finite dimensional vector space and S = {v1, v2, ..., vr} is linearly independent in V, then there e",
+      "S",
+      "Question: Which statement about insulin's role in glucose metabolism is correct?\nA. Insulin decreases blood sugar levels",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "A, B, C, D",
+      "Question: Homo erectus differed from Homo habilis primarily because __________.\nA. they lived in different continents.\nB",
+      "Question: Which of these statements correctly explains bias?\nA. It describes a process that creates estimates that are t",
+      "Assimilation",
+      "Question: If a country's central bank decides to lower interest rates while at the same time, the government increases i",
+      "None of these options accurately describe what is commonly referred to as 'American multiplication table'. The term seem",
+      "Question: A decrease in price will result in an increase in quantity demanded, not demand itself which is a broader term",
+      "To solve for x and y, we can use substitution or elimination method in a system of linear equations. Let's subtract the ",
+      "Question: Which factor is most likely to lead to a decrease in the unemployment rate?\nA. An increase in government regul",
+      "Question: What do the Hassunan and Samarran sites in Mesopotamia have in common?\nA. Both relied heavily on agriculture.\n",
+      "Question: Which of the following theories is based on the notion that mitochondria and chloroplasts evolved from prokary",
+      "Question: Statement 1 | If a finite group has order n then the group contains a subgroup of order d for every positive d"
+    ]
+  },
+  "variant": "fed_icl"
+}

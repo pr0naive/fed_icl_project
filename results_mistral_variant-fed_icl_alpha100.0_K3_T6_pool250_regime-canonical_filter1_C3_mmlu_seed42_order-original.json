@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "mistral",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 100.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.30701754385964913
+    },
+    {
+      "round": 1,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 469.72245717048645
+    },
+    {
+      "round": 2,
+      "accuracy": 0.5789473684210527,
+      "correct": 66,
+      "total": 114,
+      "time_seconds": 487.9228949546814
+    },
+    {
+      "round": 3,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 477.58066844940186
+    },
+    {
+      "round": 4,
+      "accuracy": 0.6140350877192983,
+      "correct": 70,
+      "total": 114,
+      "time_seconds": 473.90778970718384
+    },
+    {
+      "round": 5,
+      "accuracy": 0.6140350877192983,
+      "correct": 70,
+      "total": 114,
+      "time_seconds": 484.3853726387024
+    },
+    {
+      "round": 6,
+      "accuracy": 0.6052631578947368,
+      "correct": 69,
+      "total": 114,
+      "time_seconds": 473.96257758140564
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.577,
+    "local_only": 0.429
+  },
+  "in_sample_accuracy": 0.6052631578947368,
+  "eval_accuracy": 0.437,
+  "total_time_seconds": 2867.481801509857,
+  "parse_stats": {
+    "total_calls": 10692,
+    "fallback_count": 3388,
+    "fallback_rate": 0.3168724279835391,
+    "sample_unparseable": [
+      "A, B, C (all three options are correct as they all describe different ways societies can be threatened)",
+      "D (D)",
+      "A (since A and B are mutually exclusive, P(A \u222a B) = P(A) + P(B) = 0.3 + 0.2 = 0.5)",
+      "C\n\nExplanation: Positive cross-price elasticity of demand indicates that a change in the price of one good leads to an i",
+      "C (Work sample)",
+      "A (Hepatomegaly is not caused by emphysema)",
+      "C (Progressive Liberals)",
+      "D (Leo) is not located along the Milky Way in the sky. The other three, Perseus, Cygnus, and Scorpius, are all part of t",
+      "B (Atrial Septal Defect)",
+      "B\n\nThe passage by Marcus Garvey expresses a call for self-determination and autonomy for Africans, which aligns with the",
+      "A (Double shelled icosahedron) is incorrect. The Dane particle is not a structure found in biology. It's a type of virus",
+      "A (Wednesday)",
+      "To solve this problem, we can use the following formulas for mean and standard deviation in a normal distribution:\n\nMean",
+      "D\n\nHere's the reasoning behind this:\n\nLet the two positive integers be x and y, where x < y. The least common multiple (",
+      "D (Touch, pinch, grasp)",
+      "A (Decline in the appeal of religions of salvation)",
+      "A (Take fewer medications)",
+      "A (overjustification hypothesis)",
+      "A (Interpersonal)",
+      "A (Stationary process)",
+      "A (1 in 10)",
+      "A (only I) describes a property of a purely segmented memory system. The other options do not accurately describe proper",
+      "A (Pith; primary xylem; secondary xylem; vascular cambium; primary phloem; secondary phloem; cortex)",
+      "A (context-free grammar) is best suited to specify the syntax or structure of a programming language, while the other op",
+      "A (1/2)",
+      "B\nA monopoly produces less output and sells for a higher price compared to a perfectly competitive market. This is due t",
+      "D (Primate city)",
+      "B (The force of the man on the scale)",
+      "A (for all the questions)",
+      "A (0)"
+    ]
+  },
+  "variant": "fed_icl"
+}

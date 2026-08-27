@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "llama3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 13,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.2982456140350877
+    },
+    {
+      "round": 1,
+      "accuracy": 0.6052631578947368,
+      "correct": 69,
+      "total": 114,
+      "time_seconds": 593.6162831783295
+    },
+    {
+      "round": 2,
+      "accuracy": 0.5789473684210527,
+      "correct": 66,
+      "total": 114,
+      "time_seconds": 591.8179438114166
+    },
+    {
+      "round": 3,
+      "accuracy": 0.5526315789473685,
+      "correct": 63,
+      "total": 114,
+      "time_seconds": 590.9045569896698
+    },
+    {
+      "round": 4,
+      "accuracy": 0.5526315789473685,
+      "correct": 63,
+      "total": 114,
+      "time_seconds": 589.0333206653595
+    },
+    {
+      "round": 5,
+      "accuracy": 0.4649122807017544,
+      "correct": 53,
+      "total": 114,
+      "time_seconds": 592.0915057659149
+    },
+    {
+      "round": 6,
+      "accuracy": 0.5350877192982456,
+      "correct": 61,
+      "total": 114,
+      "time_seconds": 602.4084649085999
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.603,
+    "local_only": 0.4
+  },
+  "in_sample_accuracy": 0.5350877192982456,
+  "eval_accuracy": 0.377,
+  "total_time_seconds": 3559.8721153736115,
+  "parse_stats": {
+    "total_calls": 10692,
+    "fallback_count": 2651,
+    "fallback_rate": 0.24794238683127573,
+    "sample_unparseable": [
+      "Here are the answers:\n\n* D\n* C\n* A",
+      "Here are the answers:\n\nD\nC\nC\nA",
+      "Here are the answers:\n\n* B\n* D\n* C\n* D",
+      "Here are the answers:\n\nA\nB\nC\nD",
+      "Here are the answers:\n\nD\nD\nC",
+      "Here are the answers:\n\nQuestion 1: D\nQuestion 2: C\nQuestion 3: B",
+      "Here are my answers:\n\n1. D\n2. D\n3. D",
+      "Here are the answers:\n\n* Question 1: D\n* Question 2: A\n* Question 3: A",
+      "Here are the answers:\n\nA\nC\nB\nB",
+      "Here are my answers:\n\n* A\n* B\n* C\n* D",
+      "Here are the answers:\n\n* B\n* A\n* D\n* D",
+      "Here are the answers:\n\nA\nB\nA",
+      "Here are the answers:\n\nA\nD\nB\nB",
+      "Here are the answers:\n\nA. A\nB. A\nC. C\nD. D",
+      "Here are the answers:\n\nA\nC\nD\nD",
+      "Here are my answers:\n\n* A\n* B\n* D",
+      "Here are the answers:\n\nD\nD\nA",
+      "Here are the answers:\n\nD\nC\nB",
+      "Here are the answers:\n\n* B\n* A\n* C\n* D",
+      "Here are my answers:\n\n* C\n* A\n* A",
+      "Here are my answers:\n\nA\nD\nB\nC",
+      "Here are the answers:\n\nB\nA\nD",
+      "Here are the answers:\n\nD\nD\nC\nC",
+      "E",
+      "Here are the answers:\n\n* Question 1: B\n* Question 2: C\n* Question 3: A",
+      "Here are the answers:\n\n* C\n* A\n* D",
+      "Here are the answers:\n\nA\nC\nA",
+      "Z",
+      "Here are the answers:\n\n1. D\n2. A\n3. B",
+      "Here are the answers:\n\nD\nA\nA\nD"
+    ]
+  },
+  "variant": "fed_icl"
+}

@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 13,
+    "client_pool_size": 250,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.2982456140350877
+    },
+    {
+      "round": 1,
+      "accuracy": 0.6578947368421053,
+      "correct": 75,
+      "total": 114,
+      "time_seconds": 423.678998708725
+    },
+    {
+      "round": 2,
+      "accuracy": 0.6403508771929824,
+      "correct": 73,
+      "total": 114,
+      "time_seconds": 413.87190794944763
+    },
+    {
+      "round": 3,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 414.78825306892395
+    },
+    {
+      "round": 4,
+      "accuracy": 0.6140350877192983,
+      "correct": 70,
+      "total": 114,
+      "time_seconds": 423.79574036598206
+    },
+    {
+      "round": 5,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 413.0446186065674
+    },
+    {
+      "round": 6,
+      "accuracy": 0.6052631578947368,
+      "correct": 69,
+      "total": 114,
+      "time_seconds": 419.92550921440125
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.629,
+    "local_only": 0.487
+  },
+  "in_sample_accuracy": 0.6052631578947368,
+  "eval_accuracy": 0.462,
+  "total_time_seconds": 2509.1050691604614,
+  "parse_stats": {
+    "total_calls": 10692,
+    "fallback_count": 2113,
+    "fallback_rate": 0.1976243920688365,
+    "sample_unparseable": [
+      "A, B, C",
+      "There is no accurate answer to this question, as it implies a specific belief among American citizens at that time which",
+      "To determine which day of the week April begins on in February 2011 without using any direct calendar references or date",
+      "No change occurred as a direct result of these practices according to this passage; rather, colonial officials often col",
+      "None of the above directly reflects the tone, as it is more poetic and metapclitic rather than a direct mode of religiou",
+      "To find the center $(a, b)$ and the radius $r$ of the circle given by its equation in general form, we first need to rew",
+      "Question: All else equal when the United States exports more goods and services, what happens to the value of the dollar",
+      "Question: Which of the following represents an example where signal averaging would be most effective in reducing random",
+      "Question: Which of the following statements about Neandertal genetics is accurate?\nA. All modern humans have no detectab",
+      "Question: Which statement best describes the concept of 'legal positivism' as it relates to Fuller\u2019s critique?\nA. Law is",
+      "Answers: A, C, B, D respectively. The correct options are A for question one (as it's true), and then alternating betwee",
+      "Question: A ball is thrown vertically upward with an initial velocity, and it experiences air resistance proportional to",
+      "To find the number of structurally distinct Abelian groups with a given order, we factorize that order into prime factor",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "Question: Which of the following is not an abnormal breathing pattern seen in head injury and altered conscious level?\nA",
+      "Question: Arguing in favor of a claim based only on the evidence that some regular people believe the claim is one way t",
+      "A, B, C, D are all accurate statements concerning norms and expectations within certain subcultures that practice non-mo",
+      "S",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "Question: A business purchased a computer from a seller's website, and the purchase form had an important additional ter",
+      "Question: Homo erectus differed from Homo habilis in which way?\nA. Erectus fossils are found only in Africa.\nB. Erectus ",
+      "Question: Which of these is not a characteristic typically associated with nonparametric statistics?\nA. They make fewer ",
+      "Assimilation",
+      "Question: Which of the following conditions is characterized by the presence of kidney stones (renal calculi)?\nA. Glomer",
+      "Question: Which of the following is an impact of common structural adjustment policies on the poor?\nA. Cost of imports s",
+      "None of these options accurately describe what an 'American multiplication table' would mean, as it is not a standard te",
+      "Question: Let T (n) be defined by T(1) = 7 and T(n + 1) = 3T(n) for all integers n \u2265 1. Which of the following represent",
+      "Question: A business purchased a computer from a seller'in web site. The purchase form had a prominent hyperlink connect",
+      "To solve for x-y, we can subtract the first equation from the second to eliminate one variable and find a relationship b",
+      "Question: If Best County's capital projects fund had the following receipts during the year and no expenditures were mad"
+    ]
+  },
+  "variant": "fed_icl"
+}

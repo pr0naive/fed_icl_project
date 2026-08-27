@@ -1,0 +1,113 @@
+{
+  "config": {
+    "model": "phi3",
+    "num_clients": 3,
+    "num_rounds": 6,
+    "dirichlet_alpha": 1.0,
+    "num_shots": 3,
+    "num_server_queries": 114,
+    "eval_size": 1000,
+    "selection_strategy": "similarity_embedding",
+    "order_strategy": "original",
+    "seed": 42,
+    "client_pool_size": 120,
+    "client_pool_actual": 12928,
+    "data_regime": "canonical",
+    "filter_local_data": true,
+    "filter_c": 3,
+    "dataset": "mmlu"
+  },
+  "rounds": [
+    {
+      "round": 0,
+      "accuracy": 0.2719298245614035
+    },
+    {
+      "round": 1,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 419.6272759437561
+    },
+    {
+      "round": 2,
+      "accuracy": 0.6140350877192983,
+      "correct": 70,
+      "total": 114,
+      "time_seconds": 404.67284536361694
+    },
+    {
+      "round": 3,
+      "accuracy": 0.6140350877192983,
+      "correct": 70,
+      "total": 114,
+      "time_seconds": 412.0836660861969
+    },
+    {
+      "round": 4,
+      "accuracy": 0.5964912280701754,
+      "correct": 68,
+      "total": 114,
+      "time_seconds": 418.00207138061523
+    },
+    {
+      "round": 5,
+      "accuracy": 0.6403508771929824,
+      "correct": 73,
+      "total": 114,
+      "time_seconds": 423.4731800556183
+    },
+    {
+      "round": 6,
+      "accuracy": 0.6228070175438597,
+      "correct": 71,
+      "total": 114,
+      "time_seconds": 407.14856600761414
+    }
+  ],
+  "baselines": {
+    "zero_shot": 0.625,
+    "local_only": 0.469
+  },
+  "in_sample_accuracy": 0.6228070175438597,
+  "eval_accuracy": 0.467,
+  "total_time_seconds": 2485.007644891739,
+  "parse_stats": {
+    "total_calls": 10710,
+    "fallback_count": 2058,
+    "fallback_rate": 0.19215686274509805,
+    "sample_unparseable": [
+      "A, B, C",
+      "There is no accurate answer to this question, as it implies a specific belief among American citizens at that time which",
+      "To determine which day of the week April begins on in February 2011 without using any external tools or databases, we ca",
+      "To determine the validity of the argument, we need to construct a truth table for the premises and conclusion and check ",
+      "None of the above directly reflects the tone, as it is more a poetic expression rather than overtly religious discourse.",
+      "No, it's not possible for these segments to always form a triangle because one segment will always be longer than or equ",
+      "To find the center $(a, b)$ and the radius $r$ of the circle given by the equation $x^2 + 12y + 57 = -y^2 - 1term$, we f",
+      "Question: Which choice produces a faster rate of economic growth for the United States?\nA. Institution of higher tariffs",
+      "Question: Which of the following procedures would an auditor generally perform regarding subsequent events?\nOptions:\nA. ",
+      "Question: Which of the following statements describe(s) properties of a purely segmented memory system?\nI. It divides me",
+      "",
+      "",
+      "To find the number of structurally distinct Abelian groups of a given order, we factorize the order into prime factors a",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "Question: Which of the following is not an abnormal breathing pattern seen in head injury and altered conscious level?\nA",
+      "Question: Which of the following indicates that a reaction is spontaneous?\nA. at equilibrium there are more products tha",
+      "Question: For which of these two scenarios does the main character (who uses I/me/my) do something clearly morally wrong",
+      "None of the above options accurately describe what a hash function creates, which would be considered as \"digest\" or \"ha",
+      "Question: Which of the following best describes a situation where an issue's salience is high?\nA. A celebrity endorses i",
+      "",
+      "None of these options accurately describe what is commonly referred to as 'American multiplication table.' The term does",
+      "Question: Statement 1 | If every element in a group has order exactly two then the group is abelian and of even order. S",
+      "Question: A manufacturing plant operates with a single product and uses a continuous process costing system. At the begi",
+      "Question: Grant Co.'s sales budget shows the following projections for the year ending December 31: Quarter Units First ",
+      "Question: Which statement best describes the nature and function of Kelsen's Grundnorm?\nA. The ultimate source of a lega",
+      "Question: Which of the following would most likely provide examples of mitotic cell divisions?\nA. cross section of muscl",
+      "Question: Which of the following theories is based on the notion that mitochondria and chloroplasts evolved from prokary",
+      "Question: Which statement best describes a common misconception about voting behavior?\nA. Younger voters are more politi",
+      "Question: Statement 1 | If f(x) is continuous on [a,b] then there exists a c such that f'(c)=0 for all x in (a,b). State",
+      "Question: If an estimator has minimum variance, which statement about it would be incorrect?\nA. The estimate will always"
+    ]
+  },
+  "variant": "fed_icl"
+}
