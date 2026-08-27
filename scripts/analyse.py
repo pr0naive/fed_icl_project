@@ -30,7 +30,7 @@ DEFAULT_POOL = 250
 MODELS_ORDER = ["phi3", "mistral", "llama3"]
 
 
-def load_rows(results_dir="."):
+def load_rows(results_dir="results"):
     """Load every matching result JSON in results_dir into a list of dicts."""
     rows = []
     for f in sorted(Path(results_dir).glob("results_*alpha0.5_K3_T6*.json")):

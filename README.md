@@ -13,10 +13,10 @@ This README is a launchpad. Detailed documentation lives in dedicated files so e
 
 | File | What it covers |
 |---|---|
-| [`code_walkthrough.md`](code_walkthrough.md) | File-by-file tour of the codebase, design decisions behind each module, and the lifecycle of a single run. |
-| [`glossary.md`](glossary.md) | One-line definitions for every term and code variable, plus the paper-notation-to-code mapping. |
-| [`lab_notebook.md`](lab_notebook.md) | Chronological log of decisions, results, and reasoning. The canonical source for current experimental numbers. |
-| [`methodology_checklist.md`](methodology_checklist.md) | Pre-flight checks to run before launching an experiment. |
+| [`code_walkthrough.md`](docs/code_walkthrough.md) | File-by-file tour of the codebase, design decisions behind each module, and the lifecycle of a single run. |
+| [`glossary.md`](docs/glossary.md) | One-line definitions for every term and code variable, plus the paper-notation-to-code mapping. |
+| [`lab_notebook.md`](docs/lab_notebook.md) | Chronological log of decisions, results, and reasoning. The canonical source for current experimental numbers. |
+| [`methodology_checklist.md`](docs/methodology_checklist.md) | Pre-flight checks to run before launching an experiment. |
 
 For headline experimental numbers, see the most recent entries in `lab_notebook.md`. They are not duplicated here because they change.
 

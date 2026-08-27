@@ -27,8 +27,8 @@ import numpy as np
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-RESULTS_DIR = "."
-OUTPUT_DIR  = Path("plots")
+RESULTS_DIR = "results"
+OUTPUT_DIR  = Path("figures/analysis")
 MODELS_ORDER = ["phi3", "mistral", "llama3"]
 SEEDS_ORDER  = [3, 7, 13, 42, 99]
 
