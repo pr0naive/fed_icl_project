@@ -6,9 +6,9 @@ Definitions for every term and code variable used in this project. Organised by 
 
 **In-context learning (ICL).** A paradigm in which a language model performs a task by conditioning on a small number of labelled demonstrations placed in the prompt, with no updates to model parameters. The model's response to a test query depends on which demonstrations are shown and in what order, but not on any learned weights.
 
-**Demonstration (in-context example).** A single (input, label) pair shown in the prompt before the test query. In this project, the input is an AG News headline and the label is one of `world`, `sports`, `business`, `science`.
+**Demonstration (in-context example).** A single (input, label) pair shown in the prompt before the test query. The input is a short text (an AG News headline, or a DBpedia entity abstract in the extension) and the label is one of the dataset's classes.
 
-**Shot count (`NUM_SHOTS`, paper notation K).** The number of demonstrations included in the prompt. Zero-shot means no demonstrations. This project tests K ∈ {1, 3, 5} during the shot-count sweep; the default for headline runs is K=3.
+**Shot count (`NUM_SHOTS`, paper notation K).** The number of demonstrations included in the prompt. Zero-shot means no demonstrations. This project fixes K=3 for the reported runs; the demonstration count is not the swept variable (filter breadth C is; see below).
 
 **Prompt template.** The fixed string format used to wrap demonstrations and the test query into the input string sent to the model. Held constant across all conditions so that effects can be attributed to selection and ordering rather than prompt wording. Defined in `build_icl_prompt()` in `llm.py`.
 
@@ -20,9 +20,9 @@ Definitions for every term and code variable used in this project. Organised by 
 
 **Client.** An entity holding a private local pool of labelled examples. This project simulates `NUM_CLIENTS = 3` clients on a single machine.
 
-**`NUM_CLIENTS` (paper notation K, but written as N in this project to avoid clashing with shot count).** Number of clients in the federation. Default 3.
+**`NUM_CLIENTS` (paper notation N).** Number of clients in the federation. Default 3. Distinct from the shot count K.
 
-**Local pool.** The set of labelled examples one client holds, allocated from the global training set by the Dirichlet partition. Sizes vary across clients depending on the Dirichlet draw.
+**Local pool.** The set of labelled examples one client holds, allocated from the client pool by the Dirichlet partition. Sizes vary across clients depending on the Dirichlet draw.
 
 **Federation round (`NUM_ROUNDS`, paper notation T).** One cycle of local computation followed by inter-client information exchange. T=6 is the default in this project.
 
@@ -32,11 +32,11 @@ Definitions for every term and code variable used in this project. Organised by 
 
 **Fed-ICL (Wang et al., 2025).** A federated protocol for collaborative in-context learning. Each client holds a local pool of demonstrations and a shared base language model; clients exchange predictions across rounds rather than model weights.
 
-**Fed-ICL-Free.** The variant of the protocol that does not require a labelled validation set on the server side. Used in this project because it matches the constraints of local replication. The default variant in `federation.py`.
+**`FED_VARIANT`.** Selects the federation variant. Two options:
+- **`fed_icl` (default).** Step 2 conditions on the union of the client's original local data and its relabelled data. This is the standard Fed-ICL formulation and the one behind the reported results.
+- **`fed_icl_free`.** Step 2 conditions on the relabelled data only (the label-free variant), falling back to the local data if the relabelled pool is empty. Used as a comparison arm (Section 4.7), not the default.
 
-**Fed-ICL-Standard.** The variant requiring a labelled validation set on the server side for example scoring. Not used here.
-
-**Server query.** A labelled example held by the server, used as a shared test prompt that every client predicts each round. The server uses the resulting per-client predictions to update the shared global context. `NUM_SERVER_QUERIES = 100` by default.
+**Server query.** A held example used as a shared test prompt that every client predicts each round. The server uses the resulting per-client predictions to update the shared global context. `NUM_SERVER_QUERIES = 100` by default.
 
 **Global context.** The server-side set of (server query, current best label) pairs that all clients see at the start of each round. Initialised randomly at round 0; updated by majority-vote aggregation after each round.
 
@@ -54,19 +54,33 @@ Definitions for every term and code variable used in this project. Organised by 
 
 **Residual distribution.** When the Dirichlet draw is converted to integer counts via floor rounding, some examples are unallocated. This project distributes the residual round-robin starting from a randomly chosen client. Earlier code dumped all residual on client 0, which biased the local-only baseline.
 
-## 5. Demonstration selection
+## 5. Data regime and filtering
+
+**Data regime (`DATA_REGIME`).** Determines how the pool, server queries, and evaluation set are drawn. Reported experiments use `canonical_full`: the full training split is partitioned across clients, and the server queries and held-out evaluation set are drawn disjointly from the test split. (The in-file default is `canonical`, a smaller frame; `split8020` is an alternative. Set `FED_ICL_REGIME=canonical_full` to match the reported runs.)
+
+**Client pool size (`CLIENT_POOL_SIZE`).** The total pool sampled across all clients before partitioning, 250 by default (not per client).
+
+**Local data filtering (`FILTER_LOCAL_DATA`).** The paper's one-time kNN filtering of local data (Wang et al., Algorithm 2). Off by default in `config.py`, but on (`FED_ICL_FILTER=1`) for every reported run. Filtering, rather than the selection method, is the dominant lever on the local-only baseline.
+
+**Filter breadth (`FILTER_C`, paper notation C).** Neighbours kept per query in Algorithm 2. Defaults to `NUM_SHOTS` (3). Swept over C ∈ {3, 5, 10}; this is the reported filter-breadth experiment.
+
+**Dataset (`DATASET`).** `agnews` (four-class, default) or `dbpedia` (14-class, the difficulty extension). DBpedia runs in the `canonical_full` regime.
+
+## 6. Demonstration selection
 
 **Demonstration selection (`SELECTION_STRATEGY`).** The rule by which K examples are chosen from a client's local pool for inclusion in a prompt. Distinct from ordering, which is what happens after selection. Implemented in `select_examples()` in `federation.py`.
 
-**Random selection.** K examples drawn uniformly at random from the local pool. The baseline.
+**`similarity_embedding` (default).** kNN retrieval in paraphrase-MiniLM-L6-v2 embedding space (via sentence-transformers). This is the paper-faithful method (Wang et al., Appendix C.1) and the default.
 
-**Similarity selection.** K examples chosen by lexical-overlap similarity to the test query (set intersection on lowercased tokens). A lightweight proxy for KATE (Liu et al., 2022), which uses sentence embeddings. SBERT-based similarity is on the roadmap.
+**`similarity`.** Lexical word-overlap similarity to the test query (set intersection on lowercased tokens). A documented deviation, kept as an ablation arm, not the paper's method.
 
-## 6. Ordering strategies
+**`random`.** K examples drawn uniformly at random, with no filtering. Corresponds to the paper's without-filtering ablation.
 
-**Ordering strategy (`ORDER_STRATEGY`).** The rule by which the K selected demonstrations are arranged in the prompt. The primary experimental variable of this dissertation. Implemented in `order_examples()` in `federation.py`.
+## 7. Ordering strategies
 
-**Original.** Examples in the order returned by the selection step. The control. After the fix to `select_examples`, this is now genuinely unordered under both random and similarity selection.
+**Ordering strategy (`ORDER_STRATEGY`).** The rule by which the K selected demonstrations are arranged in the prompt. The primary experimental variable of this dissertation. Implemented in `order_examples()` in `federation.py`. Ordering uses lexical word-overlap similarity, distinct from the embedding similarity used for selection.
+
+**Original.** Examples in the order returned by the selection step, after the pre-ordering shuffle in `select_examples`. The control, and genuinely unordered under both random and similarity selection.
 
 **Similarity-ascending (`similarity_ascending`).** Examples sorted by lexical-overlap similarity to the test query in ascending order, so the most similar example appears last (closest to the query).
 
@@ -78,61 +92,66 @@ Definitions for every term and code variable used in this project. Organised by 
 
 **Random-shuffle (`random_shuffle`).** A fresh random order each time, used to quantify ordering-induced variance.
 
-## 7. Baselines
+## 8. Baselines and evaluation
 
 **Zero-shot baseline.** Model accuracy when given no demonstrations, only the test query. If Fed-ICL does not exceed zero-shot, demonstrations are not contributing.
 
-**Local-only baseline.** Accuracy of Client 0 using only its own local pool of K demonstrations, with the same select-and-order pipeline as Fed-ICL, and no exchange of information across clients. The decisive test of whether federation justifies its complexity overhead. Implemented in `run_baseline_local_only()` in `main.py`.
+**Local-only baseline.** Accuracy of a single client using only its own local pool, through the same select-and-order-and-filter pipeline as Fed-ICL and with no exchange of information across clients, scored on the held-out evaluation set. The decisive test of whether federation justifies its complexity. Implemented in `run_baseline_local_only()` in `main.py`.
 
-**Held-out evaluation.** Accuracy on examples drawn from the AG News test split (not the same subsample as `server_queries` and `client_pool`), evaluated using the final Fed-ICL global context with the same select-and-order pipeline as the in-pool evaluation. Reports whether the federation result generalises off the server queries.
+**Held-out evaluation set (`EVAL_SIZE`, paper notation n).** A fixed, class-balanced set drawn from the dataset's test split, n=1000 by default, never seen during federation. Held constant across orderings, alpha values, seeds, and models so comparisons are valid.
 
-## 8. Evaluation metrics
+**Held-out evaluation seed (`EVAL_SEED`).** Fixed at 12345 and decoupled from the partition `SEED`, so the evaluation sample is identical across partition seeds. This prevents partition variance and evaluation-sampling noise from being conflated.
 
-**Evaluation pool (`EVAL_SIZE`, paper notation n).** The number of test instances on which all conditions are scored. Default n=100. Held constant across orderings, alpha values, and models so comparisons are valid.
+**Federation gain.** Held-out federated accuracy minus held-out local-only accuracy, both on the same n=1000 set. This is the headline metric. It is a held-out comparison, not the in-loop shared-query accuracy: an earlier definition that subtracted local-only from the round-T shared-query accuracy overstated generalisation by about 9 percentage points, because the shared-query number is an in-sample fit.
 
 **Round accuracy.** Accuracy of the current global context on the `server_queries` set, computed after each federation round. Plotted as the convergence trajectory.
 
-**Final accuracy.** Round-T accuracy. The primary outcome variable for ordering and heterogeneity comparisons.
+**Pseudo-label accuracy.** The final-round accuracy of the shared context against ground truth, equivalently the quality of the labels being propagated between rounds. Its complement is the mislabelled share, reported at 17 to 34 percent across models.
 
-**Held-out accuracy.** Round-T accuracy on the test-split evaluation pool.
-
-**Parse fallback rate.** Fraction of model calls in a run whose output could not be parsed into any of the four AG News labels and fell back to returning `LABEL_SPACE[0]` (which is `world`). Logged by `parse_label()` in `llm.py` and reported in every results JSON. A high rate would mean ordering effects could be confounded with parser failures; the project flags any cell exceeding 10%.
+**Parse fallback rate.** Fraction of model calls in a run whose output could not be parsed into a valid label and fell back to returning `LABEL_SPACE[0]`. Logged by `parse_label()` in `llm.py` and reported in every results JSON. The project flags any cell exceeding 10%.
 
 ## 9. Reproducibility
 
-**Seed (`SEED`).** Integer used to initialise all random operations within a run: the data subsample, the Dirichlet partition, the selection shuffle, and the ordering shuffle. Three seeds are used per configuration to estimate run-to-run variance.
+**Seed (`SEED`).** Integer used to initialise the partition-side random operations within a run: the client sampling, the Dirichlet partition, the selection shuffle, and the ordering shuffle. Reported findings use five seeds per configuration, {3, 7, 13, 42, 99}, to estimate run-to-run variance. The evaluation set is seeded separately by `EVAL_SEED`.
 
-**Paired comparison.** A comparison in which two conditions are evaluated on the same seeds and the same evaluation pool, so the difference attributes to the condition rather than to sampling noise.
+**Paired comparison.** A comparison in which two conditions are evaluated on the same seeds and the same evaluation set, so the difference attributes to the condition rather than to sampling noise.
 
-**Environment variable overrides (`FED_ICL_*`).** All experimental parameters in `config.py` can be overridden from the shell. Examples: `FED_ICL_MODEL`, `FED_ICL_ALPHA`, `FED_ICL_K`, `FED_ICL_ORDER`, `FED_ICL_SEED`. Means a sweep is a shell loop, not a series of source edits.
+**Environment variable overrides (`FED_ICL_*`).** Every experimental parameter in `config.py` can be overridden from the shell, so a sweep is a shell loop rather than a series of source edits. The reported `canonical_full` filtered runs require `FED_ICL_REGIME=canonical_full FED_ICL_FILTER=1` over the in-file defaults.
 
-**Auto-named output file.** Each run writes to `results_{model}_alpha{α}_K{K}_T{T}_seed{S}_order-{order}.json` so two runs with different parameters cannot overwrite each other.
+**Auto-named output file.** Each run writes a JSON whose name encodes the full configuration, so two runs with different parameters cannot overwrite each other, for example:
+`results_{model}_variant-{variant}_alpha{α}_K{shots}_T{rounds}_pool{pool}_regime-{regime}_filter{0/1}_C{C}_{dataset}_seed{seed}_order-{order}.json`.
 
 ## 10. Code identifiers (quick reference)
 
 | Identifier              | File          | Meaning                                                |
 |-------------------------|---------------|--------------------------------------------------------|
-| `MODEL_NAME`            | `config.py`   | Ollama model identifier (llama3, mistral, phi).        |
-| `NUM_CLIENTS`           | `config.py`   | Number of simulated clients (N in glossary).           |
+| `MODEL_NAME`            | `config.py`   | Ollama model identifier (`mistral`, `llama3`, `phi3`). |
+| `DATASET`               | `config.py`   | `agnews` (default) or `dbpedia`.                       |
+| `FED_VARIANT`           | `config.py`   | `fed_icl` (default) or `fed_icl_free`.                 |
+| `DATA_REGIME`           | `config.py`   | Data frame; reported runs use `canonical_full`.        |
+| `NUM_CLIENTS`           | `config.py`   | Number of simulated clients (N).                       |
 | `NUM_ROUNDS`            | `config.py`   | Federation rounds T.                                   |
 | `NUM_SHOTS`             | `config.py`   | Demonstrations per prompt K.                           |
 | `NUM_SERVER_QUERIES`    | `config.py`   | Number of shared server queries.                       |
-| `EVAL_SIZE`             | `config.py`   | Held-out evaluation pool size n.                       |
+| `EVAL_SIZE`             | `config.py`   | Held-out evaluation size n (default 1000).             |
+| `EVAL_SEED`             | `config.py`   | Fixed eval seed (12345), decoupled from `SEED`.        |
 | `DIRICHLET_ALPHA`       | `config.py`   | Concentration parameter α for the partition.           |
-| `SELECTION_STRATEGY`    | `config.py`   | `random` or `similarity`.                              |
-| `ORDER_STRATEGY`        | `config.py`   | One of six values (see Section 6).                     |
-| `SEED`                  | `config.py`   | Random seed.                                           |
-| `LABEL_SPACE`           | `data.py`     | `["world", "sports", "business", "science"]`.          |
-| `RAW_DATA`              | `data.py`     | 350-row subsample of AG News train split.              |
+| `SELECTION_STRATEGY`    | `config.py`   | `similarity_embedding` (default), `similarity`, `random`. |
+| `ORDER_STRATEGY`        | `config.py`   | One of six values (see Section 7).                     |
+| `FILTER_LOCAL_DATA`     | `config.py`   | Apply the paper's kNN filter (on for reported runs).   |
+| `FILTER_C`              | `config.py`   | Filter breadth C (Algorithm 2); swept {3, 5, 10}.      |
+| `CLIENT_POOL_SIZE`      | `config.py`   | Total client pool before partition (250).              |
+| `SEED`                  | `config.py`   | Partition seed; grid uses {3, 7, 13, 42, 99}.          |
+| `LABEL_SPACE`           | `data.py`     | Dataset class labels (four for AG News, 14 for DBpedia). |
 | `partition_data_dirichlet` | `data.py`  | Implements the Dirichlet allocation.                   |
 | `FedICLClient`          | `federation.py` | Holds a local pool, implements relabel and predict.  |
 | `FedICLServer`          | `federation.py` | Holds the global context, aggregates predictions.    |
-| `select_examples`       | `federation.py` | Picks K examples (random or similarity).             |
+| `select_examples`       | `federation.py` | Picks K examples (embedding, lexical, or random).   |
 | `order_examples`        | `federation.py` | Arranges the K examples per `ORDER_STRATEGY`.        |
 | `aggregate_predictions` | `federation.py` | Majority-vote over per-client predictions.           |
 | `parse_label`           | `llm.py`      | Token-level matching; logs fallbacks.                  |
 | `query_ollama`          | `llm.py`      | HTTP call to Ollama with retry on transient failure.   |
 | `_PARSE_STATS`          | `llm.py`      | Module-level dict tracking parse fallback rate.        |
 | `run_baseline_zero_shot`| `main.py`     | Zero-shot baseline runner.                             |
-| `run_baseline_local_only`| `main.py`    | Local-only baseline using Client 0.                    |
-| `run_fed_icl`           | `main.py`     | Main Fed-ICL training and evaluation loop.             |
+| `run_baseline_local_only`| `main.py`    | Local-only baseline, scored on the held-out set.       |
+| `run_fed_icl`           | `main.py`     | Main Fed-ICL loop and held-out evaluation.             |
