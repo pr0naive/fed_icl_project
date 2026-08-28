@@ -1,5 +1,5 @@
 """
-Fed-ICL Replication — LLM Module (4-class)
+Fed-ICL Replication - LLM Module (4-class)
 =================================================
 Handles all interactions with Ollama.
 Updated for 4-class news topic classification.
