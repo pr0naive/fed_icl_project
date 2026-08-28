@@ -966,7 +966,6 @@ introduced on 2026-06-16 remains the more defensible claim.
 `scripts/plot_multi_seed.py` and regenerates all four when run from a
 directory containing the result JSON files.
 
-![Federation gain by model and seed](figures/multi_seed_validation/01_gain_heatmap.png)
 
 - `01_gain_heatmap.png` - federation gain by (model, seed); the
   cross-model agreement is visible as vertical colour banding.
