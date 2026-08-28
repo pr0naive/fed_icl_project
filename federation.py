@@ -1,5 +1,5 @@
 """
-Fed-ICL Replication — Core Algorithm (with ordering)
+Fed-ICL Replication - Core Algorithm (with ordering)
 
 Implements Fed-ICL (Wang et al., ICML 2025) with support for example ordering experiments.
 """
