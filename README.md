@@ -8,6 +8,8 @@ a faithful implementation of the Fed-ICL pipeline of Wang et al. (ICML
 demonstrations interacts with client **data heterogeneity**, evaluated on
 held-out data across three open models and five random seeds.
 
+This code is also available at https://github.com/pr0naive/fed_icl_project. The submitted archive is a snapshot of the `main` branch at submission time.
+
 The primary task is AG News four-class topic classification, with DBpedia
 (14-class) as a difficulty extension. An MMLU extension is in progress on
 the `mmlu-extension` branch and is not part of the results reported here.
