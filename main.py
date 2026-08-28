@@ -189,7 +189,7 @@ def print_summary(results: dict):
 
 def main():
     print("\n╔══════════════════════════════════════════════════════╗")
-    print("  ║  Fed-ICL Replication  —  AG News Topic Classification║")
+    print("  ║  Fed-ICL Replication  -  AG News Topic Classification║")
     print("  ╚══════════════════════════════════════════════════════╝\n")
 
     if not check_ollama_ready():
