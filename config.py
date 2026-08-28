@@ -1,5 +1,5 @@
 """
-Fed-ICL Replication Configuration (v3 -  env-overrideable)
+Fed-ICL Replication Configuration (v3 - env-overrideable)
 ========================================================
 All tuneable experiment parameters in one place.
 Adjust these before running experiments.
