@@ -1,5 +1,5 @@
 """
-Fed-ICL Replication — Data Module (v2 - Harder Task)
+Fed-ICL Replication - Data Module (v2 - Harder Task)
 =====================================================
 """
 
