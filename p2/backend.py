@@ -51,11 +51,20 @@ class VLLMBackend:
         for attempt in range(4):
             try:
                 r = requests.post(self.url, json=self._payload(messages, seed), timeout=180)
-                if r.status_code == 400 and self.constrain_mode != "none":
-                    # Unsupported constraint field on this vLLM version: step down once.
-                    self.constrain_mode = {"structured_outputs": "guided_choice",
-                                           "guided_choice": "none"}[self.constrain_mode]
-                    continue
+                if r.status_code == 400:
+                    body = r.text.lower()
+                    field_problem = any(w in body for w in ("structured_outputs", "guided", "extra inputs", "extra_forbidden"))
+                    if field_problem and self.constrain_mode != "none":
+                        # Unsupported constraint field on this vLLM version: step down once.
+                        self.constrain_mode = {"structured_outputs": "guided_choice",
+                                               "guided_choice": "none"}[self.constrain_mode]
+                        continue
+                    # Any other 400 (e.g. prompt longer than the context window):
+                    # record it and give up on this request, never retry blindly.
+                    self.stats["errors"] += 1
+                    if "context" in body or "maximum" in body or "too long" in body:
+                        self.stats["too_long"] = self.stats.get("too_long", 0) + 1
+                    return None
                 r.raise_for_status()
                 return r.json()
             except requests.exceptions.ConnectionError:

@@ -8,6 +8,6 @@ export HF_TOKEN="$(cat /workspace/.hf_token)"
 
 vllm serve meta-llama/Llama-3.1-8B-Instruct \
   --dtype bfloat16 \
-  --max-model-len 8192 \
+  --max-model-len 16384 \
   --gpu-memory-utilization 0.90 \
   --port 8000 2>&1 | tee /workspace/vllm.log
