@@ -1,0 +1,6 @@
+vllm
+sentence-transformers
+datasets
+requests
+numpy
+pytest
