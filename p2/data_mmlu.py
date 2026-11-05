@@ -95,7 +95,8 @@ def mean_pairwise_jsd(clients, subjects):
 
 def prepare(cfg, items=None):
     items = items if items is not None else load_mmlu_test()
-    q_idx = stratified(items, cfg.queries_per_subject, cfg.query_seed)
+    qseed = cfg.query_seed + cfg.seed if cfg.query_mode == "per_seed" else cfg.query_seed
+    q_idx = stratified(items, cfg.queries_per_subject, qseed)
     used = set(q_idx)
     e_idx = []
     if cfg.eval_size > 0:
@@ -107,6 +108,7 @@ def prepare(cfg, items=None):
     info = {
         "n_items": len(items),
         "n_queries": len(q_idx),
+        "query_seed_used": qseed,
         "n_eval": len(e_idx),
         "n_pool": len(pool),
         "client_sizes": [len(c) for c in clients],

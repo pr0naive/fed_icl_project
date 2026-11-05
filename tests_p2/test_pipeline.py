@@ -47,7 +47,7 @@ def test_prompt_never_reveals_query_answer():
 def test_all_arms_run_and_log():
     cfg, items, q, clients, ev, _ = _setup(eval_size=60)
     r = Runner(cfg, FakeBackend(items), Retriever("fake"))
-    for arm in ["zeroshot", "gt", "ub", "fedicl", "fedicl_free", "solo_free"]:
+    for arm in ["zeroshot", "gt", "ub", "randlabel", "fedicl", "fedicl_free", "solo_free"]:
         r.trace = []
         out = r.run_arm(arm, q, clients, ev)
         assert 0 <= out["accuracy"] <= 1 and len(out["per_query_correct"]) == 114
@@ -68,3 +68,9 @@ def test_both_pool_gives_2C_demos_and_union_gives_C():
         r.loop(q, clients, "full", "fedicl")
         query_calls = [t for t in r.trace if t["phase"] == "query"]
         assert max(t["n_demos"] for t in query_calls) == expected
+
+
+def test_per_seed_queries_differ_and_fixed_mode_does_not():
+    _, _, q1, *_ = _setup(seed=1, query_mode="per_seed")
+    _, _, q2, *_ = _setup(seed=2, query_mode="per_seed")
+    assert [x.question for x in q1] != [x.question for x in q2] and len(q1) == len(q2) == 114

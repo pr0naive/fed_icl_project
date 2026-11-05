@@ -58,6 +58,11 @@ class Config:
     # Data
     queries_per_subject: int = int(_env("P2_QPS", "2"))
     query_seed: int = int(_env("P2_QUERY_SEED", "12345"))
+    # "fixed": every seed uses the same 114 queries (the seed-42 calibration).
+    # "per_seed": query draw = query_seed + seed, so 5 seeds cover 570 distinct
+    # questions. Arms stay paired within a seed. Needed for statistical power:
+    # 114 questions cannot resolve differences of a few points.
+    query_mode: str = _env("P2_QUERY_MODE", "fixed")
     # Held-out evaluation is OUR addition (the paper scores server queries only).
     # 0 disables it; when on, items are disjoint from queries and client pools.
     eval_size: int = int(_env("P2_EVAL", "0"))

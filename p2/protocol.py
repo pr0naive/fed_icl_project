@@ -9,6 +9,9 @@ Arms (all scored on the same 114 server queries):
                one round
   fedicl       Fed-ICL (Algorithm 1): iterative relabelling, conditions on D_i and D_i^k
   fedicl_free  Fed-ICL-Free: conditions on D_i^k only (client labels never used)
+  randlabel    OUR CONTROL: identical to gt (same kNN demonstrations, one round,
+               vote) but every demonstration gets a RANDOM label. If it matches
+               gt or Fed-ICL, label correctness is not what drives the gain.
   solo_free    OUR CONTROL: Fed-ICL-Free run by ONE client holding all client
                questions. No federation, no labels, same iterative loop. If it
                matches Fed-ICL, the gain is not coming from federation.
@@ -80,10 +83,13 @@ class Runner:
         preds = self._predict([([], q) for q in queries], "zeroshot", 0, -1, "query")
         return {"final_labels": preds, "accuracy": self._acc(preds, queries)}
 
-    def gt(self, queries, clients, arm="gt"):
+    def gt(self, queries, clients, arm="gt", random_labels=False):
         S = self.cfg.num_shots
         if self.cfg.use_filter:
             clients = [self.rt.filter_pool(c, queries, S) for c in clients]
+        if random_labels:
+            lab_rng = np.random.default_rng(self.cfg.seed + 3000)
+            clients = [[relabel(x, str(lab_rng.choice(LETTERS))) for x in c] for c in clients]
         per_client = [
             self._predict([(self.rt.knn(q, c, S), q) for q in queries], arm, 1, i, "query")
             for i, c in enumerate(clients)
@@ -168,6 +174,8 @@ class Runner:
             out = self.gt(queries, clients)
         elif arm == "ub":
             out = self.ub(queries, clients)
+        elif arm == "randlabel":
+            out = self.gt(queries, clients, arm="randlabel", random_labels=True)
         elif arm == "fedicl":
             out = self.loop(queries, clients, "full", arm)
         elif arm == "fedicl_free":

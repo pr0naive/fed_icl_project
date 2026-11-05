@@ -6,6 +6,8 @@ set -euo pipefail
 source /workspace/venv/bin/activate
 export HF_HOME=/workspace/hf_cache
 cd /workspace/fed_icl_project
+mkdir -p results_p2
+export HF_TOKEN="$(cat /workspace/.hf_token)"
 ALPHA="${1:-1.0}"
 python -m p2.run --arms zeroshot,gt,fedicl,fedicl_free,solo_free --seed 42 --alpha "$ALPHA" \
   2>&1 | tee "results_p2/calibration_alpha${ALPHA}_seed42.log"
