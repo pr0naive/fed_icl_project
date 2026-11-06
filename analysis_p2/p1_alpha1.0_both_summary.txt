@@ -1,0 +1,55 @@
+Folder results_p2/p1_alpha1.0_both: seeds [3, 7, 13, 42, 99], 570 questions per arm
+
+Accuracy per seed (correct / 114) and pooled
+arm          s3    s7    s13   s42   s99     pooled
+zeroshot     72    70    75    80    78      375/570 = 65.8%
+randlabel    79    78    80    84    83      404/570 = 70.9%
+gt           80    78    82    88    88      416/570 = 73.0%
+fedicl       79    80    80    87    86      412/570 = 72.3%
+fedicl_free  80    79    81    87    89      416/570 = 73.0%
+solo_free    81    75    82    86    86      410/570 = 71.9%
+
+Paired comparisons, pooled over all questions (exact McNemar; 95% bootstrap CI of the difference)
+randlabel   - zeroshot   :  +5.1 pts [ +1.8,  +8.4]  only-randlabel= 65 only-zeroshot= 36  p=0.005
+gt          - zeroshot   :  +7.2 pts [ +3.9, +10.7]  only-gt= 69 only-zeroshot= 28  p=0.000
+fedicl      - zeroshot   :  +6.5 pts [ +3.2,  +9.8]  only-fedicl= 65 only-zeroshot= 28  p=0.000
+fedicl_free - zeroshot   :  +7.2 pts [ +3.9, +10.7]  only-fedicl_free= 69 only-zeroshot= 28  p=0.000
+solo_free   - zeroshot   :  +6.1 pts [ +2.8,  +9.5]  only-solo_free= 68 only-zeroshot= 33  p=0.001
+gt          - randlabel  :  +2.1 pts [ +0.9,  +3.5]  only-gt= 14 only-randlabel=  2  p=0.004
+fedicl      - gt         :  -0.7 pts [ -2.3,  +0.9]  only-fedicl=  9 only-gt= 13  p=0.523
+fedicl_free - gt         :  +0.0 pts [ -1.2,  +1.2]  only-fedicl_free=  7 only-gt=  7  p=1.000
+fedicl      - fedicl_free:  -0.7 pts [ -2.3,  +0.9]  only-fedicl=  9 only-fedicl_free= 13  p=0.523
+fedicl_free - solo_free  :  +1.1 pts [ -1.1,  +3.2]  only-fedicl_free= 22 only-solo_free= 16  p=0.418
+fedicl      - solo_free  :  +0.4 pts [ -1.8,  +2.5]  only-fedicl= 19 only-solo_free= 17  p=0.868
+solo_free   - gt         :  -1.1 pts [ -3.0,  +0.9]  only-solo_free= 14 only-gt= 20  p=0.392
+
+Iterative arms: accuracy and pseudo-label accuracy by round (mean over seeds)
+  fedicl      acc  r0..r6:  24.7  71.6  72.3  71.2  71.6  71.8  72.3
+  fedicl      pseudo r1..r6:        70.2  69.9  70.0  70.2  70.0  69.9
+  fedicl_free acc  r0..r6:  24.7  72.6  71.6  71.9  72.5  72.3  73.0
+  fedicl_free pseudo r1..r6:        69.8  70.1  70.0  69.9  70.0  70.2
+  solo_free   acc  r0..r6:  24.7  72.6  71.4  71.9  71.8  71.9  71.9
+  solo_free   pseudo r1..r6:        69.5  69.5  69.4  69.5  69.5  69.7
+
+Do iterative arms just reproduce zero-shot answers? (final labels equal to zero-shot answer)
+  gt         : 78.4% of answers identical to zero-shot
+  randlabel  : 78.4% of answers identical to zero-shot
+  fedicl     : 79.5% of answers identical to zero-shot
+  fedicl_free: 78.6% of answers identical to zero-shot
+  solo_free  : 77.4% of answers identical to zero-shot
+
+Round 1 vs round 6 server labels (how much the loop changes its own answers)
+  fedicl     : 2.6% of the 114 answers change between round 1 and round 6
+  fedicl_free: 2.3% of the 114 answers change between round 1 and round 6
+  solo_free  : 2.3% of the 114 answers change between round 1 and round 6
+
+Health: unparseable / errors / too_long per arm (summed)
+  zeroshot   : calls=570 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+  randlabel  : calls=1710 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+  gt         : calls=1710 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+  fedicl     : calls=56880 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+  fedicl_free: calls=56880 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+  solo_free  : calls=19956 unparseable=0 errors=0 too_long=0 mode=structured_outputs
+
+Data splits: {3: [5269, 4754, 3905], 7: [4142, 6160, 3626], 13: [4020, 5610, 4298], 42: [4294, 3906, 5728], 99: [4497, 4810, 4621]}
+Query draws: {3: 12348, 7: 12352, 13: 12358, 42: 12387, 99: 12444}
