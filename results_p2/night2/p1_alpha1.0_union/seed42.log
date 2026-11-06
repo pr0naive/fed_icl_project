@@ -1,0 +1,12 @@
+Server models: ['meta-llama/Llama-3.1-8B-Instruct']
+Data: {'n_items': 14042, 'n_queries': 114, 'query_seed_used': 12387, 'n_eval': 0, 'n_pool': 13928, 'client_sizes': [4294, 3906, 5728], 'client_subjects': [57, 57, 57], 'heterogeneity_jsd': 0.28336534542506603}
+
+=== fedicl | alpha=1.0 seed=42 ===
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 9880.24it/s]
+  [fedicl] round 1: 0.763 (clients [0.772, 0.746, 0.737], ties 1)
+  [fedicl] round 2: 0.763 (clients [0.746, 0.754, 0.746], ties 0)
+  [fedicl] round 3: 0.763 (clients [0.754, 0.746, 0.746], ties 0)
+  [fedicl] round 4: 0.763 (clients [0.754, 0.754, 0.737], ties 0)
+  [fedicl] round 5: 0.772 (clients [0.763, 0.746, 0.746], ties 0)
+  [fedicl] round 6: 0.763 (clients [0.763, 0.754, 0.737], ties 0)
+=== fedicl: 87/114 = 0.763 (898.4s) -> results_p2/night2/p1_alpha1.0_union/fedicl_alpha1.0_seed42.json

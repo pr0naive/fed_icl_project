@@ -1,0 +1,43 @@
+Server models: ['meta-llama/Llama-3.1-8B-Instruct']
+Generating test split:   0%|          | 0/14042 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 14042/14042 [00:00<00:00, 382387.15 examples/s]
+Generating validation split:   0%|          | 0/1531 [00:00<?, ? examples/s]Generating validation split: 100%|██████████| 1531/1531 [00:00<00:00, 168101.56 examples/s]
+Generating dev split:   0%|          | 0/285 [00:00<?, ? examples/s]Generating dev split: 100%|██████████| 285/285 [00:00<00:00, 47870.60 examples/s]
+Generating auxiliary_train split:   0%|          | 0/99842 [00:00<?, ? examples/s]Generating auxiliary_train split:  13%|█▎        | 13000/99842 [00:00<00:00, 116866.29 examples/s]Generating auxiliary_train split:  31%|███       | 31000/99842 [00:00<00:00, 142502.45 examples/s]Generating auxiliary_train split:  47%|████▋     | 47000/99842 [00:00<00:00, 141633.65 examples/s]Generating auxiliary_train split:  70%|███████   | 70000/99842 [00:00<00:00, 143882.44 examples/s]Generating auxiliary_train split: 100%|██████████| 99842/99842 [00:00<00:00, 187191.17 examples/s]Generating auxiliary_train split: 100%|██████████| 99842/99842 [00:00<00:00, 166113.78 examples/s]
+Data: {'n_items': 14042, 'n_queries': 114, 'query_seed_used': 12387, 'n_eval': 0, 'n_pool': 13928, 'client_sizes': [3517, 6134, 4277], 'client_subjects': [19, 20, 19], 'heterogeneity_jsd': 0.9995174448802305}
+
+=== zeroshot | alpha=0.001 seed=42 ===
+=== zeroshot: 80/114 = 0.702 (4.2s) -> results_p2/night2/p1_alpha0.001_both/zeroshot_alpha0.001_seed42.json
+
+=== randlabel | alpha=0.001 seed=42 ===
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 8291.84it/s]
+=== randlabel: 86/114 = 0.754 (47.1s) -> results_p2/night2/p1_alpha0.001_both/randlabel_alpha0.001_seed42.json
+
+=== gt | alpha=0.001 seed=42 ===
+=== gt: 85/114 = 0.746 (30.9s) -> results_p2/night2/p1_alpha0.001_both/gt_alpha0.001_seed42.json
+
+=== fedicl | alpha=0.001 seed=42 ===
+  [fedicl] round 1: 0.746 (clients [0.728, 0.728, 0.719], ties 1)
+  [fedicl] round 2: 0.728 (clients [0.711, 0.737, 0.728], ties 1)
+  [fedicl] round 3: 0.746 (clients [0.728, 0.728, 0.719], ties 0)
+  [fedicl] round 4: 0.737 (clients [0.711, 0.746, 0.719], ties 1)
+  [fedicl] round 5: 0.728 (clients [0.702, 0.728, 0.719], ties 1)
+  [fedicl] round 6: 0.728 (clients [0.711, 0.719, 0.719], ties 1)
+=== fedicl: 83/114 = 0.728 (1020.5s) -> results_p2/night2/p1_alpha0.001_both/fedicl_alpha0.001_seed42.json
+
+=== fedicl_free | alpha=0.001 seed=42 ===
+  [fedicl_free] round 1: 0.746 (clients [0.728, 0.737, 0.746], ties 0)
+  [fedicl_free] round 2: 0.746 (clients [0.728, 0.754, 0.737], ties 0)
+  [fedicl_free] round 3: 0.746 (clients [0.737, 0.728, 0.728], ties 2)
+  [fedicl_free] round 4: 0.746 (clients [0.728, 0.728, 0.746], ties 1)
+  [fedicl_free] round 5: 0.746 (clients [0.728, 0.737, 0.719], ties 1)
+  [fedicl_free] round 6: 0.746 (clients [0.728, 0.754, 0.754], ties 1)
+=== fedicl_free: 85/114 = 0.746 (855.0s) -> results_p2/night2/p1_alpha0.001_both/fedicl_free_alpha0.001_seed42.json
+
+=== solo_free | alpha=0.001 seed=42 ===
+  [solo_free] round 1: 0.772 (clients [0.772], ties 0)
+  [solo_free] round 2: 0.763 (clients [0.763], ties 0)
+  [solo_free] round 3: 0.754 (clients [0.754], ties 0)
+  [solo_free] round 4: 0.746 (clients [0.746], ties 0)
+  [solo_free] round 5: 0.763 (clients [0.763], ties 0)
+  [solo_free] round 6: 0.772 (clients [0.772], ties 0)
+=== solo_free: 88/114 = 0.772 (303.5s) -> results_p2/night2/p1_alpha0.001_both/solo_free_alpha0.001_seed42.json

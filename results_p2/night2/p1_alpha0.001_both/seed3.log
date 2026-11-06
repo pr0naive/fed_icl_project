@@ -1,0 +1,39 @@
+Server models: ['meta-llama/Llama-3.1-8B-Instruct']
+Data: {'n_items': 14042, 'n_queries': 114, 'query_seed_used': 12348, 'n_eval': 0, 'n_pool': 13928, 'client_sizes': [6044, 2733, 5151], 'client_subjects': [21, 15, 21], 'heterogeneity_jsd': 1.0}
+
+=== zeroshot | alpha=0.001 seed=3 ===
+=== zeroshot: 72/114 = 0.632 (1.8s) -> results_p2/night2/p1_alpha0.001_both/zeroshot_alpha0.001_seed3.json
+
+=== randlabel | alpha=0.001 seed=3 ===
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5468.18it/s]
+=== randlabel: 77/114 = 0.675 (43.5s) -> results_p2/night2/p1_alpha0.001_both/randlabel_alpha0.001_seed3.json
+
+=== gt | alpha=0.001 seed=3 ===
+=== gt: 80/114 = 0.702 (31.3s) -> results_p2/night2/p1_alpha0.001_both/gt_alpha0.001_seed3.json
+
+=== fedicl | alpha=0.001 seed=3 ===
+  [fedicl] round 1: 0.675 (clients [0.649, 0.711, 0.693], ties 1)
+  [fedicl] round 2: 0.675 (clients [0.649, 0.719, 0.675], ties 2)
+  [fedicl] round 3: 0.675 (clients [0.64, 0.719, 0.667], ties 2)
+  [fedicl] round 4: 0.693 (clients [0.658, 0.711, 0.684], ties 2)
+  [fedicl] round 5: 0.702 (clients [0.667, 0.719, 0.675], ties 1)
+  [fedicl] round 6: 0.684 (clients [0.658, 0.711, 0.684], ties 2)
+=== fedicl: 78/114 = 0.684 (1009.9s) -> results_p2/night2/p1_alpha0.001_both/fedicl_alpha0.001_seed3.json
+
+=== fedicl_free | alpha=0.001 seed=3 ===
+  [fedicl_free] round 1: 0.684 (clients [0.675, 0.711, 0.684], ties 3)
+  [fedicl_free] round 2: 0.693 (clients [0.675, 0.719, 0.684], ties 4)
+  [fedicl_free] round 3: 0.711 (clients [0.667, 0.728, 0.675], ties 3)
+  [fedicl_free] round 4: 0.711 (clients [0.711, 0.711, 0.684], ties 2)
+  [fedicl_free] round 5: 0.702 (clients [0.684, 0.719, 0.675], ties 3)
+  [fedicl_free] round 6: 0.702 (clients [0.684, 0.719, 0.675], ties 3)
+=== fedicl_free: 80/114 = 0.702 (839.7s) -> results_p2/night2/p1_alpha0.001_both/fedicl_free_alpha0.001_seed3.json
+
+=== solo_free | alpha=0.001 seed=3 ===
+  [solo_free] round 1: 0.702 (clients [0.702], ties 0)
+  [solo_free] round 2: 0.711 (clients [0.711], ties 0)
+  [solo_free] round 3: 0.719 (clients [0.719], ties 0)
+  [solo_free] round 4: 0.702 (clients [0.702], ties 0)
+  [solo_free] round 5: 0.693 (clients [0.693], ties 0)
+  [solo_free] round 6: 0.711 (clients [0.711], ties 0)
+=== solo_free: 81/114 = 0.711 (301.4s) -> results_p2/night2/p1_alpha0.001_both/solo_free_alpha0.001_seed3.json
