@@ -47,7 +47,7 @@ echo "Watching $REMOTE on $IP:$PORT (checks every 2 minutes; Ctrl-C to quit)"
 fails=0
 while true; do
   state=$(ssh $SSH_OPTS root@"$IP" \
-    "if [ -f $REMOTE/DONE ]; then echo done; elif [ -f $REMOTE/FAILED ]; then echo failed; else echo running; fi; ls $REMOTE/*.json 2>/dev/null | wc -l" 2>/dev/null)
+    "if [ -f $REMOTE/DONE ]; then echo done; elif [ -f $REMOTE/FAILED ]; then echo failed; else echo running; fi; find $REMOTE -name \"*.json\" 2>/dev/null | wc -l" 2>/dev/null)
   if [ -z "$state" ]; then
     fails=$((fails + 1))
     echo "$(date +%H:%M) cannot reach the pod ($fails in a row)"
@@ -70,7 +70,7 @@ while true; do
 
   mkdir -p "$LOCAL"
   if scp -P "$PORT" -i "$KEY" -o BatchMode=yes -r root@"$IP":"$REMOTE" "$LOCAL/"; then
-    copied=$(ls "$LOCAL/$DIR"/*.json 2>/dev/null | wc -l | tr -d ' ')
+    copied=$(find "$LOCAL/$DIR" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
     echo "Copied $copied result files to $LOCAL/$DIR"
     if [ "$status" = "done" ] && [ "$copied" -ge 1 ]; then
       alarm "Your Fed-ICL run has finished and the results are on your Mac."
